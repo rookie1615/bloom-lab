@@ -1,0 +1,186 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Tiny Business Tycoon - Idle Business Game</title>
+<meta name="description" content="Build a business empire! Start with oil, fast food, mining or a car wash, hire workers, automate, and buy more businesses. Free idle tycoon game.">
+<meta name="theme-color" content="#141a2b"><meta property="og:title" content="Tiny Business Tycoon"><meta property="og:description" content="A free idle business tycoon game. Build your empire!"><meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231f2740'/%3E%3Ctext x='50' y='70' font-size='62' text-anchor='middle'%3E%F0%9F%8F%A2%3C/text%3E%3C/svg%3E">
+<style>
+:root{color-scheme:dark;--bg:#141a2b;--card:#1f2740;--tx:#f2f5ff;--mu:#9aa6c9;--ok:#2ecc71;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,sans-serif}
+#app{display:flex;flex-direction:column;height:100%;max-width:900px;margin:auto}
+#top{display:flex;align-items:center;gap:8px;padding:8px 12px}#m{font-size:26px;font-weight:800;color:var(--ok)}#ps{color:var(--mu);font-size:13px;flex:1}
+button{font:inherit;border:0;border-radius:10px;padding:8px 12px;background:#3a86ff;color:#fff;font-weight:700;cursor:pointer}button:disabled{background:#394263;color:#7d88ad;cursor:not-allowed}
+#tabs{display:flex;gap:6px;padding:0 10px 6px;overflow-x:auto}.tab{background:var(--card);border:2px solid transparent;white-space:nowrap}.tab.on{border-color:#fff}
+#stage{flex:0 0 38%;min-height:160px;background:#161d38}#stage canvas{display:block}
+#panel{flex:1;overflow-y:auto;padding:8px 10px 14px}
+.r{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card);border-radius:12px;padding:9px 12px;margin-bottom:7px}.r small{color:var(--mu)}.l{color:#ffd60a;font-size:12px;margin-left:6px}.r button{min-width:96px}
+.card{text-align:center;background:var(--card);border-radius:16px;padding:20px}.card .big{font-size:64px}
+#start{position:fixed;inset:0;background:var(--bg);z-index:5;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top,0px)) 14px 20px}#start h1{text-align:center;margin:6px 0}#start p{text-align:center;color:var(--mu);margin:0 0 14px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;max-width:900px;margin:auto}.g .card{border:3px solid}
+#toast{position:fixed;left:50%;top:14px;transform:translateX(-50%);background:#fff;color:#111;padding:8px 16px;border-radius:20px;font-weight:700;z-index:9;opacity:0;transition:opacity .3s;pointer-events:none}
+body{background:radial-gradient(circle at 50% 0,#243063 0,#141a2b 55%) fixed}
+#top{background:linear-gradient(135deg,#2a3560,#171d36);margin:10px;border-radius:18px;padding:10px 14px;box-shadow:0 6px 20px #0006,inset 0 1px #ffffff22}
+#m{font-size:30px;font-weight:900;text-shadow:0 0 18px #2ecc7199}#m::before{content:'💵 ';font-size:22px}
+#ps{font-weight:700;color:#b9c4ee}
+button{transition:transform .08s,filter .2s;box-shadow:0 3px 0 #0005}button:not(:disabled):hover{filter:brightness(1.15)}button:not(:disabled):active{transform:translateY(3px);box-shadow:none}
+#ad{background:linear-gradient(#ffb703,#fb8500)}#sn{background:#2c3660}
+#tabs{padding:10px 10px 8px}.tab{border-radius:999px;background:#232b4a;border:2px solid #2f3a66}.tab.on{background:var(--c);border-color:#fff9;box-shadow:0 0 16px var(--c);color:#111}
+#stage{margin:0 10px;border-radius:18px;overflow:hidden;border:3px solid #34417a;box-shadow:0 8px 24px #000a}
+.r{border:1px solid #2f3a66;background:linear-gradient(180deg,#273158,#1c2442);border-radius:14px;box-shadow:0 3px 10px #0004}.r b{font-size:15px}
+.r.ok{border-color:#2ecc71aa;box-shadow:0 0 14px #2ecc7133}.r.ok button{background:linear-gradient(#3ee083,#1fa85a)}
+.ic{width:44px;height:44px;flex:none;display:grid;place-items:center;font-size:22px;background:#0004;border-radius:12px;box-shadow:inset 0 1px #fff1}
+.l{background:#0004;border-radius:8px;padding:1px 7px}
+.card{background:linear-gradient(180deg,#2a3562,#1b2240);box-shadow:0 8px 22px #0006}#start{background:radial-gradient(circle at 50% 0,#2b3a7a 0,#141a2b 60%)}#start h1{font-size:34px;text-shadow:0 0 22px #3a86ffaa}
+.g .card{transition:transform .15s}.g .card:hover{transform:translateY(-4px) scale(1.02)}
+#ad{display:none}
+#pop{position:fixed;z-index:8;display:none;align-items:center;gap:12px;padding:12px 18px 16px;border-radius:18px;background:linear-gradient(135deg,#7b2ff7,#f107a3);box-shadow:0 10px 30px #000a,0 0 24px #f107a3aa;cursor:pointer;overflow:hidden;transform:translate(-50%,-50%);animation:pp .5s cubic-bezier(.3,1.6,.5,1)}
+#pop.rb{background:linear-gradient(120deg,#ff0040,#ff9100,#ffee00,#00e676,#00b0ff,#d500f9,#ff0040);background-size:300% 100%;animation:pp .5s cubic-bezier(.3,1.6,.5,1),rbw 2s linear infinite}
+#pop .pi{font-size:38px}#pop b{display:block;font-size:17px;text-shadow:0 2px 0 #0006}#pop small{opacity:.95}
+#pop i{position:absolute;left:0;bottom:0;height:6px;background:#fff;width:100%;animation:shr 5s linear forwards}
+@keyframes shr{to{width:0}}@keyframes pp{from{transform:translate(-50%,-50%) scale(.3)}}@keyframes rbw{to{background-position:300% 0}}
+#set{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:#000b}#set .box{width:min(92vw,360px);background:linear-gradient(180deg,#2a3562,#1b2240);border:2px solid #3a4a8a;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:14px}#set h2{margin:0}#set label{display:flex;justify-content:space-between;align-items:center;gap:10px}#set select{font:inherit;padding:6px;border-radius:8px;background:#141a2b;color:#fff;border:1px solid #3a4a8a}#set .danger{background:linear-gradient(#ef4444,#b91c1c)}
+.gear{background:#2c3660}.r.mi button{min-width:74px;margin-left:6px;line-height:1.15;padding:6px 8px}.r.mi small{font-size:11px;opacity:.9}
+</style></head><body>
+<div id="app"><div id="top"><div id="m">$0</div><div id="ps"></div><button id="ad">🎬 2× 60s</button><button id="sn">🔊</button></div><div id="tabs"></div><div id="stage"></div><div id="panel"></div></div>
+<div id="start"></div><div id="toast"></div><div id="pop"></div><div id="set"></div>
+<script>
+// ---------- Tiny canvas engine (no external files needed) ----------
+const Phaser=(()=>{const rgb=(c,a=1)=>'rgba('+((c>>16)&255)+','+((c>>8)&255)+','+(c&255)+','+a+')';
+class G{constructor(c){this.c=c;this.fa=1;this.fc=0;this.gr=null;this.lw=1;this.lc=0;this.la=1}
+clear(){this.c.clearRect(0,0,800,400);return this}
+fillStyle(c,a=1){this.fc=c;this.fa=a;this.gr=null;return this}
+lineStyle(w,c,a=1){this.lw=w;this.lc=c;this.la=a;return this}
+fillGradientStyle(a,b,c,d,al=1){this.gr=[a,c,al];return this}
+_f(){this.c.fillStyle=rgb(this.fc,this.fa)}
+_s(){const c=this.c;c.lineWidth=this.lw;c.strokeStyle=rgb(this.lc,this.la);c.lineCap='round'}
+fillRect(x,y,w,h){const c=this.c;if(this.gr){const k=c.createLinearGradient(0,y,0,y+h);k.addColorStop(0,rgb(this.gr[0],this.gr[2]));k.addColorStop(1,rgb(this.gr[1],this.gr[2]));c.fillStyle=k}else this._f();c.fillRect(x,y,w,h);return this}
+_rr(x,y,w,h,r){const c=this.c;r=Math.max(0,Math.min(r,w/2,h/2));c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+fillRoundedRect(x,y,w,h,r=0){this._f();this._rr(x,y,w,h,r);this.c.fill();return this}
+strokeRoundedRect(x,y,w,h,r=0){this._s();this._rr(x,y,w,h,r);this.c.stroke();return this}
+strokeRect(x,y,w,h){this._s();this.c.strokeRect(x,y,w,h);return this}
+fillCircle(x,y,r){this._f();const c=this.c;c.beginPath();c.arc(x,y,Math.max(0,r),0,6.2832);c.fill();return this}
+strokeCircle(x,y,r){this._s();const c=this.c;c.beginPath();c.arc(x,y,Math.max(0,r),0,6.2832);c.stroke();return this}
+fillEllipse(x,y,w,h){this._f();const c=this.c;c.beginPath();c.ellipse(x,y,w/2,h/2,0,0,6.2832);c.fill();return this}
+fillTriangle(a,b,d,e,f,g){this._f();const c=this.c;c.beginPath();c.moveTo(a,b);c.lineTo(d,e);c.lineTo(f,g);c.closePath();c.fill();return this}
+lineBetween(a,b,d,e){this._s();const c=this.c;c.beginPath();c.moveTo(a,b);c.lineTo(d,e);c.stroke();return this}
+beginPath(){this.c.beginPath();return this}
+arc(x,y,r,s,e){this.c.arc(x,y,r,s,e);return this}
+strokePath(){this._s();this.c.stroke();return this}}
+class Game{constructor(cf){const cv=document.createElement('canvas');cv.width=800;cv.height=400;cv.style.cssText='width:100%;height:100%;display:block;object-fit:contain;touch-action:manipulation';document.getElementById(cf.parent).appendChild(cv);const ctx=cv.getContext('2d'),sc=new cf.scene(),hs=[];sc.add={graphics:()=>new G(ctx)};sc.input={on:(e,fn)=>hs.push(fn)};sc.create();
+cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),k=Math.min(r.width/800,r.height/400),ox=(r.width-800*k)/2,oy=(r.height-400*k)/2;const p={x:(e.clientX-r.left-ox)/k,y:(e.clientY-r.top-oy)/k};hs.forEach(h=>h(p))});
+let last=0;const loop=t=>{const dt=last?Math.min(t-last,100):16;last=t;sc.update(t,dt);requestAnimationFrame(loop)};requestAnimationFrame(loop)}}
+const HSVToRGB=(h,s,v)=>{const i=Math.floor(h*6),f=h*6-i,p=v*(1-s),q=v*(1-f*s),t=v*(1-(1-f)*s);const m=[[v,t,p],[q,v,p],[p,v,t],[p,q,v],[t,p,v],[v,p,q]][i%6];return{color:(Math.round(m[0]*255)<<16)|(Math.round(m[1]*255)<<8)|Math.round(m[2]*255)}};
+return{Scene:class{},Game,AUTO:0,Scale:{FIT:1,CENTER_BOTH:1},Display:{Color:{HSVToRGB}}}})();
+// ---------- CONFIG (all balance lives here) ----------
+const CFG={order:['oil','food','mine','wash'],unlock:[0,20000,150000,1000000],
+speedMul:1.2,valMul:1.15,mgMul:1.35,costs:{sp:[40,2.4],va:[60,2.2],ma:[150,2],wo:[250,1.9],mg:[2500,6]},
+oil:{n:'Oil Empire',s:'Oil',e:'🛢️',c:'#f4a300',bg:'#3b2f1e',iv:2,val:6,m:'Pump',w:'Roughneck',hat:0xffd60a,ug:['Extraction Speed','Barrel Value'],d:'Pump crude and build a petroleum empire.',sp:{n:'Refinery',d:'Refined oil sells for ×3',c:7500,vm:3,sm:1}},
+food:{n:'Fast Food Empire',s:'Food',e:'🍔',c:'#e63946',bg:'#4a2326',iv:1.2,val:4,m:'Grill',w:'Cook',hat:0xffffff,ug:['Cooking Speed','Meal Value'],d:'Flip burgers, serve customers, franchise up.',sp:{n:'Restaurant Expansion',d:'Meals ×2 value and ×1.5 speed',c:8500,vm:2,sm:1.5}},
+mine:{n:'Mining Empire',s:'Mining',e:'⛏️',c:'#4cc9f0',bg:'#272b3a',iv:2.8,val:9,m:'Drill',w:'Miner',hat:0xff8c00,ug:['Drilling Speed','Ore Value'],d:'Drill deep and strike rare gems (5% bonus ×5).',sp:{n:'Deep Mining',d:'Ore ×2.5, gem chance 15%',c:9500,vm:2.5,sm:1.2}},
+wash:{n:'Car Wash Empire',s:'Wash',e:'🚗',c:'#3a86ff',bg:'#1c3550',iv:1.6,val:5,m:'Wash Bay',w:'Washer',hat:0x00b4d8,ug:['Wash Speed','Service Value'],d:'Suds, shine and a line of happy customers.',sp:{n:'Automatic Wash System',d:'Throughput ×3, value ×1.2',c:9000,vm:1.2,sm:3}}};
+// ---------- STATE / ECONOMY ----------
+let S=null,AC=null,scene=null;const H=s=>parseInt(s.slice(1),16);
+const nb=()=>({ma:1,wo:0,mg:0,sc:0,pr:[],m:[{sp:0,va:0}]});
+const f=n=>{const u=['','K','M','B','T','Qa'];let i=0;while(n>=1000&&i<5){n/=1000;i++}return'$'+(i?n.toFixed(2):n>=100?n.toFixed(0):n.toFixed(n<10?1:0))+u[i]};
+const spm=(id,i)=>{const b=S.b[id];return CFG.speedMul**(b.m[i]?b.m[i].sp:0)*(b.sc?CFG[id].sp.sm:1)};
+const gc=id=>S.b[id].sc?.15:.05;
+const uv=(id,i)=>{const b=S.b[id],c=CFG[id];return c.val*CFG.valMul**(b.m[i]?b.m[i].va:0)*(b.sc?c.sp.vm:1)*CFG.mgMul**b.mg};
+const au=id=>S.rb>0?S.b[id].ma:Math.min(S.b[id].wo,S.b[id].ma);
+const rate=id=>{if(!S.own.includes(id))return 0;let r=0;for(let i=0;i<au(id);i++)r+=spm(id,i)/CFG[id].iv*uv(id,i);return r*(id=='mine'?1+gc(id)*4:1)};
+const gm=()=>(S.sb>0?2:1)*(S.rb>0?10:1);const inc=()=>CFG.order.reduce((a,i)=>a+rate(i),0)*(S.boost>0?2:1)*gm();
+const MS=[1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10];
+function earn(v){v*=S.boost>0?2:1;S.money+=v;S.total+=v;if(S.ms<MS.length&&S.total>=MS[S.ms]){toast('🏆 Milestone: earned '+f(MS[S.ms])+'!');S.ms++}}
+function cost(k,n){const c=CFG.costs[k];return c[0]*c[1]**n}
+const LN={en:'English',es:'Español',fr:'Français',de:'Deutsch',pt:'Português'};
+const D={en:{sp:'Speed',va:'Value',wo:'Workers',mg:'Managers',buy:'Buy for',max:'MAX',set:'Settings',lang:'Language',snd:'Sound',vol:'Volume',reset:'Reset progress',sure:'Tap again to confirm!',close:'Close',cont:'Continue saved game',pick:'Pick your first business. You can buy the others later!',start:'Start',mach:'Machines (upgrade each one!)',ewo:'Runs one machine automatically',emach:'Another machine adds output',m2:'2× Money',s2:'2× Speed',rb:'Rainbow Worker',tapad:'Tap to claim bonus',on:'On',off:'Off',done:'Progress reset.'},
+es:{sp:'Velocidad',va:'Valor',wo:'Trabajadores',mg:'Gerentes',buy:'Comprar por',set:'Ajustes',lang:'Idioma',snd:'Sonido',vol:'Volumen',reset:'Reiniciar progreso',sure:'¡Toca otra vez para confirmar!',close:'Cerrar',cont:'Continuar partida',pick:'Elige tu primer negocio. ¡Podrás comprar los demás después!',start:'Empezar',mach:'Máquinas (¡mejora cada una!)',ewo:'Opera una máquina solo',emach:'Otra máquina aumenta la producción',m2:'2× Dinero',s2:'2× Velocidad',rb:'Trabajador Arcoíris',tapad:'Toca para ver anuncio',on:'Sí',off:'No',done:'Progreso reiniciado.'},
+fr:{sp:'Vitesse',va:'Valeur',wo:'Employés',mg:'Managers',buy:'Acheter pour',set:'Paramètres',lang:'Langue',snd:'Son',vol:'Volume',reset:'Réinitialiser',sure:'Touchez encore pour confirmer !',close:'Fermer',cont:'Continuer la partie',pick:'Choisissez votre première entreprise. Vous achèterez les autres plus tard !',start:'Commencer',mach:'Machines (améliorez-les une par une !)',ewo:'Fait tourner une machine seul',emach:'Une machine de plus augmente la production',m2:'2× Argent',s2:'2× Vitesse',rb:'Employé Arc-en-ciel',tapad:'Touchez pour voir la pub',on:'Oui',off:'Non',done:'Progression réinitialisée.'},
+de:{sp:'Tempo',va:'Wert',wo:'Arbeiter',mg:'Manager',buy:'Kaufen für',set:'Einstellungen',lang:'Sprache',snd:'Ton',vol:'Lautstärke',reset:'Fortschritt löschen',sure:'Nochmal tippen zum Bestätigen!',close:'Schließen',cont:'Spiel fortsetzen',pick:'Wähle dein erstes Geschäft. Die anderen kaufst du später!',start:'Start',mach:'Maschinen (einzeln verbessern!)',ewo:'Bedient eine Maschine automatisch',emach:'Eine weitere Maschine erhöht die Produktion',m2:'2× Geld',s2:'2× Tempo',rb:'Regenbogen-Arbeiter',tapad:'Tippen für Werbung',on:'An',off:'Aus',done:'Fortschritt gelöscht.'},
+pt:{sp:'Velocidade',va:'Valor',wo:'Funcionários',mg:'Gerentes',buy:'Comprar por',set:'Configurações',lang:'Idioma',snd:'Som',vol:'Volume',reset:'Reiniciar progresso',sure:'Toque de novo para confirmar!',close:'Fechar',cont:'Continuar jogo',pick:'Escolha seu primeiro negócio. Você compra os outros depois!',start:'Começar',mach:'Máquinas (melhore cada uma!)',ewo:'Opera uma máquina sozinho',emach:'Outra máquina aumenta a produção',m2:'2× Dinheiro',s2:'2× Velocidade',rb:'Funcionário Arco-íris',tapad:'Toque para ver o anúncio',on:'Ligado',off:'Desligado',done:'Progresso reiniciado.'}};
+let LANG='en',SET={snd:true,vol:.8};try{LANG=localStorage.getItem('tbtl')||'en';Object.assign(SET,JSON.parse(localStorage.getItem('tbts')||'{}'))}catch(e){}
+const T=(k,fb)=>LANG=='en'&&fb?fb:((D[LANG]||{})[k]||D.en[k]||fb||k);
+const sv=()=>{try{localStorage.setItem('tbts',JSON.stringify(SET))}catch(x){}};
+function openSet(){const e=$('set');e.innerHTML=`<div class="box"><h2>⚙️ ${T('set')}</h2><label>${T('lang')}<select id="sl">${Object.keys(LN).map(k=>`<option value="${k}" ${k==LANG?'selected':''}>${LN[k]}</option>`).join('')}</select></label><label>${T('snd')}<button id="st">${SET.snd?T('on'):T('off')}</button></label><label>${T('vol')}<input id="sv" type="range" min="0" max="1" step=".05" value="${SET.vol}"></label><button id="sr" class="danger">${T('reset')}</button><button id="sc2">${T('close')}</button></div>`;e.style.display='flex';
+$('sl').onchange=ev=>{LANG=ev.target.value;try{localStorage.setItem('tbtl',LANG)}catch(x){}lastRender='';menu();if(S)ui(1);openSet()};
+$('st').onclick=()=>{SET.snd=!SET.snd;sv();openSet();beep()};$('sv').oninput=ev=>{SET.vol=+ev.target.value;sv()};$('sv').onchange=()=>beep();
+let armed=0;$('sr').onclick=()=>{if(!armed){armed=1;$('sr').textContent=T('sure');setTimeout(()=>{armed=0;if($('sr'))$('sr').textContent=T('reset')},3000)}else{try{localStorage.removeItem('tbt1')}catch(x){}S=null;clearTimeout(adT);adBusy=false;$('pop').style.display='none';lastRender='';menu();$('start').style.display='block';e.style.display='none';toast(T('done'))}};
+$('sc2').onclick=()=>e.style.display='none'}
+function ups(id){const b=S.b[id],c=CFG[id];return[
+{k:'ma',n:c.m+'s',l:b.ma+'/8',c:cost('ma',b.ma-1),done:b.ma>=8,e:T('emach')},
+{k:'wo',n:T('wo',c.w+'s'),l:b.wo+'/'+b.ma,c:cost('wo',b.wo),cap:b.wo>=b.ma,e:T('ewo')},
+{k:'mg',n:T('mg','Managers'),l:b.mg+'/5',c:cost('mg',b.mg),done:b.mg>=5,e:'×1.35'},
+{k:'sc',n:'⭐ '+c.sp.n,l:b.sc?'✓':'—',c:c.sp.c,done:b.sc,e:c.sp.d}]}
+function mups(id,i){const m=S.b[id].m[i];return[{k:'sp',l:m.sp,c:cost('sp',m.sp),done:m.sp>=15},{k:'va',l:m.va,c:cost('va',m.va)}]}
+function mlist(id){const b=S.b[id],c=CFG[id];return'<h3 style="margin:14px 2px 8px">🔧 '+T('mach')+'</h3>'+b.m.map((m,i)=>'<div class="r mi"><div class="ic">'+c.e+'</div><div style="flex:1"><b>'+c.m+' #'+(i+1)+'</b>'+(i<au(id)?' <span class="l">👷</span>':'')+'<br><small>×'+spm(id,i).toFixed(2)+' · '+f(uv(id,i))+'</small></div>'+mups(id,i).map(u=>{const dis=u.done||S.money<u.c;return'<button data-m="'+i+'" data-k="'+u.k+'" '+(dis?'disabled':'')+'>'+(u.k=='sp'?'⚡ ':'💰 ')+u.l+'<br><small>'+(u.done?T('max'):f(u.c))+'</small></button>'}).join('')+'</div>').join('')}
+function buyM(id,i,k){const u=mups(id,i).find(x=>x.k==k);if(!u||u.done||S.money<u.c)return;S.money-=u.c;S.b[id].m[i][k]++;beep(700);ui(1)}
+function ups0(id){const b=S.b[id],c=CFG[id];return[
+{k:'sp',n:c.ug[0],l:b.sp,c:cost('sp',b.sp),done:b.sp>=15,e:'+20% speed (now ×'+spm(id).toFixed(2)+')'},
+{k:'va',n:c.ug[1],l:b.va,c:cost('va',b.va),e:'+15% value ('+f(uv(id))+' each)'},
+{k:'ma',n:c.m+'s',l:b.ma+'/8',c:cost('ma',b.ma-1),done:b.ma>=8,e:'Another '+c.m.toLowerCase()+' adds output'},
+{k:'wo',n:c.w+'s',l:b.wo+'/'+b.ma,c:cost('wo',b.wo),cap:b.wo>=b.ma,e:'Runs one machine automatically'},
+{k:'mg',n:'Managers',l:b.mg+'/5',c:cost('mg',b.mg),done:b.mg>=5,e:'×1.35 income each'},
+{k:'sc',n:'⭐ '+c.sp.n,l:b.sc?'Owned':'—',c:c.sp.c,done:b.sc,e:c.sp.d}]}
+function buy(id,k){const u=ups(id).find(x=>x.k==k);if(!u||u.done||u.cap||S.money<u.c)return;S.money-=u.c;S.b[id][k]++;if(k=='ma')S.b[id].m.push({sp:0,va:0});beep(700);ui(1)}
+const bizPrice=()=>CFG.unlock[S.own.length];
+function buyBiz(id){const p=bizPrice();if(p==null||S.money<p)return;S.money-=p;S.own.push(id);S.b[id]=nb();S.cur=id;toast('🎉 '+CFG[id].n+' unlocked!');beep(900);ui(1)}
+// ---------- SAVE / UI ----------
+function save(){try{S.ts=Date.now();localStorage.setItem('tbt1',JSON.stringify(S))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem('tbt1'));return s&&s.own?s:null}catch(e){return null}}
+function begin(s){S=s;for(const id of S.own){const b=S.b[id];if(!b.m)b.m=Array.from({length:b.ma},()=>({sp:b.sp||0,va:b.va||0}))}$('start').style.display='none';schedAd(1);const off=Math.min((Date.now()-S.ts)/1000,14400);if(S.ts&&off>30){const g=inc()*off*.25;if(g>0){S.money+=g;S.total+=g;toast('Welcome back! Offline earnings: '+f(g))}}ui(1)}
+function newGame(id){begin({cur:id,money:0,total:0,own:[id],b:{[id]:nb()},boost:0,snd:true,ts:Date.now(),ms:0})}
+const $=i=>document.getElementById(i);
+function toast(t){const e=$('toast');e.textContent=t;e.style.opacity=1;clearTimeout(e.t);e.t=setTimeout(()=>e.style.opacity=0,2400)}
+function beep(fr=520){if(!SET.snd||adBusy)return;try{AC=AC||new AudioContext();const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=fr;g.gain.value=.05*SET.vol;o.connect(g);g.connect(AC.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+.1);o.stop(AC.currentTime+.1)}catch(e){}}
+const Platform={rewarded(cb){toast('Bonus incoming...');setTimeout(cb,600)}}; // swap in an ad network here if you want real rewarded ads
+let lastRender='';
+function ui(force){if(!S)return;$('m').textContent=f(S.money);$('ps').textContent=f(inc())+'/sec'+(S.boost>0?'  💰2× '+Math.ceil(S.boost)+'s':'')+(S.sb>0?'  ⚡2× '+Math.ceil(S.sb)+'s':'')+(S.rb>0?'  🌈10× '+Math.ceil(S.rb)+'s':'');$('sn').textContent='⚙️';
+ const tb=CFG.order.map(id=>{const o=S.own.includes(id);return`<button class="tab ${S.cur==id?'on':''}" data-t="${id}" style="--c:${CFG[id].c}">${o?CFG[id].e:'🔒'} ${CFG[id].s}</button>`}).join('');
+ let p;const id=S.cur,c=CFG[id];
+ if(S.own.includes(id)){p=`<div style="color:${c.c};font-weight:800;margin:2px 2px 8px">${c.e} ${c.n} — tap a ${c.m.toLowerCase()} for a bonus (1.5s cooldown) — hire workers to automate!</div>`+ups(id).map(u=>{const dis=u.done||u.cap||S.money<u.c;return`<div class="r ${dis?'':'ok'}"><div class="ic">${{sp:'⚡',va:'💰',ma:'🏭',wo:'👷',mg:'👔',sc:'⭐'}[u.k]}</div><div style="flex:1"><b>${u.n}</b><span class="l">${u.l}</span><br><small>${u.e}</small></div><button data-k="${u.k}" ${dis?'disabled':''}>${u.done?T('max'):u.cap?'Need more '+c.m+'s':f(u.c)}</button></div>`}).join('')+mlist(id)}
+ else{const pr=bizPrice();p=`<div class="card"><div class="big">${c.e}</div><h2 style="color:${c.c}">${c.n}</h2><p>${c.d}</p><p>Starts with 1 ${c.m}. Special: <b>${c.sp.n}</b> — ${c.sp.d}</p><button data-b="${id}" ${S.money<pr?'disabled':''}>${T('buy')} ${f(pr)}</button></div>`}
+ const key=tb+p;if(force||key!=lastRender){lastRender=key;$('tabs').innerHTML=tb;$('panel').innerHTML=p}}
+$('tabs').onpointerdown=e=>{const t=e.target.closest('[data-t]');if(t){S.cur=t.dataset.t;ui(1)}};
+$('panel').onpointerdown=e=>{const b=e.target.closest('button');if(!b||b.disabled)return;if(b.dataset.m!==undefined)buyM(S.cur,+b.dataset.m,b.dataset.k);else if(b.dataset.k)buy(S.cur,b.dataset.k);else if(b.dataset.b)buyBiz(b.dataset.b)};
+$('sn').onclick=openSet;
+$('ad').onclick=()=>Platform.rewarded(()=>{S.boost=60;toast('⚡ 2× income for 60s!')});
+function menu(){const sv=load();$('start').innerHTML='<div style="text-align:right;max-width:900px;margin:auto"><button class="gear">⚙️</button></div><h1>🏢 Tiny Business Tycoon</h1><p>'+T('pick')+'</p><div class="g">'+CFG.order.map(id=>{const c=CFG[id];return`<div class="card" style="border-color:${c.c}"><div class="big">${c.e}</div><h3>${c.n}</h3><p style="font-size:13px">${c.d}</p><p style="font-size:12px">⭐ ${c.sp.n}</p><button data-s="${id}" style="background:${c.c}">${T('start')}</button></div>`}).join('')+'</div>'+(sv?'<p style="margin-top:16px"><button id="cont">'+T('cont')+'</button></p>':'');
+ $('start').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.s)newGame(b.dataset.s);else if(b.className=='gear')openSet();else if(b.id=='cont')begin(sv)}}
+// ---------- PHASER SCENE ----------
+const sh=(c,k)=>{const r=Math.min(255,((c>>16)&255)*k)|0,g=Math.min(255,((c>>8)&255)*k)|0,b=Math.min(255,(c&255)*k)|0;return(r<<16)|(g<<8)|b};
+const SLOT=i=>({x:110+(i%4)*193,y:110+(i>>2)*170});
+let adT=null,adBusy=false;
+function schedAd(first){clearTimeout(adT);adT=setTimeout(showAd,(first?15:30+Math.random()*30)*1000)}
+function showAd(){if(!S||adBusy||document.hidden){schedAd();return}const r=Math.random(),k=r<.08?'rb':r<.54?'boost':'sb',D={boost:['💰','2× Money','60s',60],sb:['⚡','2× Speed','60s',60],rb:['🌈','Rainbow Worker','20s · 10× speed!',20]}[k],e=$('pop');e.className=k=='rb'?'rb':'';e.innerHTML='<div class=pi>'+D[0]+'</div><div><b>'+D[1]+'</b><small>🎬 Tap to watch ad · '+D[2]+'</small></div><i></i>';e.style.left=(28+Math.random()*44)+'%';e.style.top=(30+Math.random()*28)+'%';e.style.display='flex';clearTimeout(e.t);const hide=()=>{e.style.display='none';clearTimeout(e.t);schedAd()};e.t=setTimeout(hide,5000);e.onpointerdown=()=>{if(adBusy)return;adBusy=true;e.style.display='none';clearTimeout(e.t);Platform.rewarded(()=>{S[k]=D[3];adBusy=false;toast(k=='rb'?'🌈 Rainbow worker is here!':'✨ '+D[1]+' active!');beep(900);schedAd()})}}
+class Main extends Phaser.Scene{
+create(){scene=this;this.fl=[];this.g=this.add.graphics();this.pop=[];this.nfx=0;this.last=0;this.cd=0;this.input.on('pointerdown',p=>{if(!S||!S.own.includes(S.cur))return;const b=S.b[S.cur];for(let i=0;i<b.ma;i++){const s=SLOT(i);if(Math.abs(p.x-s.x)<75&&Math.abs(p.y-s.y)<85){this.click(i);break}}})}
+float(x,y,t,col='#fff'){if(this.nfx>25)return;this.nfx++;this.fl.push({x,y,t,col,a:0})}
+unit(id,i){let v=uv(id,i);if(id=='mine'&&Math.random()<gc(id))v*=5;return v}
+click(i){if(this.cd>0)return;this.cd=1.5;const id=S.cur,v=this.unit(id,i);earn(v);this.pop[i]=1;const s=SLOT(i);this.float(s.x,s.y-30,'+'+f(v*(S.boost>0?2:1)),'#9dff9d');beep(500+Math.random()*100)}
+update(t,dt){if(!S)return;dt/=1000;S.tt=(S.tt||0)+dt;if(S.boost>0)S.boost-=dt;if(S.sb>0)S.sb-=dt;if(S.rb>0)S.rb-=dt;if(this.cd>0)this.cd-=dt*gm();
+ for(const id of S.own){const b=S.b[id],a=au(id),iv=CFG[id].iv;for(let i=0;i<a;i++){b.pr[i]=(b.pr[i]||0)+dt*spm(id,i)*gm();if(b.pr[i]>=iv){let k=Math.min(100,Math.floor(b.pr[i]/iv));b.pr[i]-=k*iv;let sum=0;for(let j=0;j<k;j++)sum+=this.unit(id,i);earn(sum);if(id==S.cur){this.pop[i]=1;if(k==1){const s=SLOT(i);this.float(s.x,s.y-30,'+'+f(sum*(S.boost>0?2:1)))}}}}}
+ for(let i=0;i<8;i++)if(this.pop[i]>0)this.pop[i]=Math.max(0,this.pop[i]-dt*3);
+ this.draw();this.ftx(dt)}
+draw(){const g=this.g,id=S.cur,c=CFG[id],T=S.tt;g.clear();const bc=H(c.bg),dk=(bc>>1)&0x7f7f7f;g.fillGradientStyle(bc,bc,dk,dk,1).fillRect(0,0,800,400);for(let r=0;r<8;r++)for(let q=0;q<16;q++)if((r+q)%2)g.fillStyle(0xffffff,.035).fillRect(q*50,r*50,50,50);g.fillStyle(H(c.c),.15).fillRect(0,0,800,6);
+ if(!S.own.includes(id)){g.fillStyle(0,.5).fillRect(0,0,800,400);return}
+ const b=S.b[id],a=au(id);
+ for(let i=0;i<8;i++){const{x,y}=SLOT(i);if(i>=b.ma){if(i==b.ma)g.lineStyle(2,0xffffff,.18).strokeRect(x-45,y-30,90,80);continue}
+  const act=i<a,fr=act?Math.min(1,(b.pr[i]||0)/c.iv):0,pop=this.pop[i]||0,yy=-pop*6;
+  g.fillStyle(0xffffff,.07).fillRoundedRect(x-80,y-70,160,150,16);g.lineStyle(2,H(c.c),.35).strokeRoundedRect(x-80,y-70,160,150,16);g.fillStyle(0,.25).fillEllipse(x,y+55,120,30);this.mach(g,id,x,y,T,fr,pop,yy,b,act);
+  if(act){const wx=x-52,wy=y+48+Math.sin(T*6+i)*2;this.wk(g,wx,wy+8,c.hat,H(c.c),T+i);if(b.mg>0&&i==0)g.fillStyle(0xffd700).fillTriangle(wx-6,wy-19,wx+6,wy-19,wx,wy-31)}
+  g.fillStyle(0,.4).fillRect(x-35,y+66,70,6);g.fillStyle(H(c.c)).fillRect(x-35,y+66,70*fr,6);if(this.cd>0)g.lineStyle(4,0xffffff,.6).beginPath().arc(x,y-60,9,-1.57,-1.57+6.28*(1-this.cd/1.5)).strokePath();else g.fillStyle(0xffffff,.5+.4*Math.sin(T*6)).fillCircle(x,y-60,5);for(let k=0;k<Math.min(10,b.m[i].sp+b.m[i].va);k++)g.fillStyle(0xffd700).fillCircle(x-31+k*7,y+76,2.5)}if(S.rb>0)this.rbw(g,T)}
+ftx(dt){const c=this.g.c;c.font='bold 20px sans-serif';c.textAlign='center';c.lineWidth=4;c.lineJoin='round';this.fl=this.fl.filter(o=>{o.a+=dt/.8;if(o.a>=1){this.nfx--;return false}c.globalAlpha=1-o.a;const y=o.y-55*o.a;c.strokeStyle='#000';c.strokeText(o.t,o.x,y);c.fillStyle=o.col;c.fillText(o.t,o.x,y);return true});c.globalAlpha=1}
+bx(g,x,y,w,h,c,r=6){g.fillStyle(sh(c,.65)).fillRoundedRect(x,y,w,h,r);g.fillStyle(c).fillRoundedRect(x,y,w,h-3,r);g.fillStyle(sh(c,1.35),.7).fillRoundedRect(x+2,y+2,w-4,Math.min(5,h/3),2);g.lineStyle(2,sh(c,.4)).strokeRoundedRect(x,y,w,h,r)}
+wk(g,x,y,hat,body,t){const s=Math.sin(t*8)*3;g.fillStyle(0,.25).fillEllipse(x,y+10,18,6);g.lineStyle(3,0x2b2b3a).lineBetween(x-3,y,x-3+s,y+9).lineBetween(x+3,y,x+3-s,y+9);g.lineStyle(3,sh(body,.8)).lineBetween(x-6,y-9,x-9,y-3+s).lineBetween(x+6,y-9,x+9,y-3-s);this.bx(g,x-6,y-13,12,15,body,4);g.fillStyle(0xffd7a8).fillCircle(x,y-19,6);g.fillStyle(0x222).fillCircle(x-2,y-19,1).fillCircle(x+2,y-19,1);g.fillStyle(hat).fillRoundedRect(x-7,y-28,14,7,3);g.fillRect(x-8,y-22,16,2)}
+rbw(g,T){const d=Math.cos(T*2.2)>0?1:-1,x=100+(Math.sin(T*2.2)*.5+.5)*600,y=350+Math.abs(Math.sin(T*9))*-8;for(let k=7;k>=0;k--){const c=Phaser.Display.Color.HSVToRGB((((T*.8-k*.06)%1)+1)%1,1,1).color;g.fillStyle(c,.5*(1-k/8)).fillCircle(x-d*k*11,y-8,9-k)}const c=Phaser.Display.Color.HSVToRGB((T*1.5)%1,1,1).color;this.wk(g,x,y,c,c,T*1.6);for(let k=0;k<5;k++)g.fillStyle(0xffffff,Math.random()).fillCircle(x+(Math.random()-.5)*50,y-30+(Math.random()-.5)*50,2)}
+mach(g,id,x,y,t,fr,pop,yy,b,act){const sc=b.sc,W=act||pop>0,B=(a,c,w,h,col,r)=>this.bx(g,a,c,w,h,col,r);
+if(id=='oil'){g.fillStyle(0x2a2118,.9).fillEllipse(x,y+50,130,30);g.fillStyle(0x0b0b0b).fillEllipse(x+6,y+50,70,14);g.fillStyle(0xffffff,.15).fillEllipse(x-6,y+48,22,4);B(x-30,y+36,60,14,0x6b7280,4);const cy=y-26+yy,A=Math.sin(t*4)*.32*(W?1:.1)+pop*.25,dx=Math.cos(A)*46,dy=Math.sin(A)*46;g.lineStyle(7,0x4b5563).lineBetween(x-26,y+36,x,cy).lineBetween(x+26,y+36,x,cy);g.lineStyle(13,0x6b3f00).lineBetween(x-dx,cy-dy,x+dx,cy+dy);g.lineStyle(8,0xffc21a).lineBetween(x-dx,cy-dy,x+dx,cy+dy);g.lineStyle(2,0xfff0a8).lineBetween(x-dx,cy-dy-2,x+dx,cy+dy-2);g.fillStyle(0x374151).fillCircle(x-dx,cy-dy+4,11);g.fillStyle(0x6b7280).fillCircle(x-dx-3,cy-dy+1,4);g.fillStyle(0xe5a100).fillCircle(x+dx,cy+dy,9);g.fillStyle(0xffe08a).fillCircle(x+dx-2,cy+dy-2,3);g.lineStyle(2,0xe5e7eb).lineBetween(x+dx,cy+dy+8,x+dx,y+36);g.fillStyle(0xef4444).fillCircle(x,cy,6);B(x+34,y+4,32,46,0x3b82c4,8);g.fillStyle(0x111827).fillRect(x+40,y+44-fr*30,20,fr*30);g.fillStyle(0xffffff,.35).fillRect(x+40,y+10,4,34);g.lineStyle(2,0x1e3a5f).lineBetween(x+34,y+20,x+66,y+20).lineBetween(x+34,y+34,x+66,y+34);g.lineStyle(4,0x6b7280).lineBetween(x+8,y+44,x+34,y+44);if(sc){B(x-72,y-32,22,82,0xd1d5db,6);for(let k=0;k<3;k++)g.fillStyle(0x6b7280).fillRect(x-72,y-14+k*22,22,3);g.fillStyle(0xff7a00).fillCircle(x-61,y-42,9+Math.sin(t*12)*2);g.fillStyle(0xffd23f).fillCircle(x-61,y-40,5)}}
+else if(id=='food'){B(x-52,y+16,104,38,0xc92f43,6);for(let k=0;k<5;k++)g.fillStyle(0xffffff,.18).fillRect(x-46+k*20,y+20,10,30);B(x-56,y+8,112,10,0xf3f4f6,4);B(x-36,y-4+yy,72,14,0x2b2b33,5);g.fillStyle(0xff4d2e,.5+.3*Math.sin(t*9)).fillRect(x-30,y+6+yy,60,2);const by=y-18-fr*22+yy;g.fillStyle(0x7a3b1d).fillEllipse(x,by+10,34,9);g.fillStyle(0x5cb85c).fillEllipse(x,by+5,36,6);g.fillStyle(0xffc233).fillRect(x-15,by+2,30,3);g.fillStyle(0xe29a3b).fillEllipse(x,by-3,36,18);g.fillStyle(0xffe3a8,.8).fillEllipse(x-6,by-6,14,5);if(W)for(let k=0;k<3;k++){const u=(t*1.5+k*.33)%1;g.fillStyle(0xffffff,.35*(1-u)).fillCircle(x-10+k*10,y-30-u*22,4)}for(let k=0;k<(sc?7:5);k++)g.fillStyle(k%2?0xffffff:0xe63946).fillRoundedRect(x-56+k*(sc?16:22),y-50,sc?16:22,12,3);if(act){const cx=x+66+Math.sin(t*3)*3;g.fillStyle(0xffd7a8).fillCircle(cx,y+16,7);B(cx-7,y+22,14,22,0x3a86ff,4)}}
+else if(id=='mine'){g.fillStyle(0x4b4f5c).fillTriangle(x-66,y+54,x-8,y+54,x-38,y+6);g.fillStyle(0x7b8090).fillTriangle(x-38,y+6,x-8,y+54,x-30,y+54);g.fillStyle(0x0b0b10).fillEllipse(x,y+50,60,14);g.lineStyle(4,0xffb300);for(let k=0;k<2;k++)g.lineBetween(x-22,y+44-k*40,x+22,y+4-k*40).lineBetween(x+22,y+44-k*40,x-22,y+4-k*40);g.lineBetween(x-22,y+46,x-22,y-36).lineBetween(x+22,y+46,x+22,y-36);B(x-26,y-56+yy,52,22,0xd1495b,6);const j=W?Math.sin(t*45)*2:0;g.fillStyle(0xb8bcc8).fillRect(x-6+j,y-34+yy,12,60);for(let k=0;k<6;k++)g.fillStyle(0x6b7280).fillRect(x-6+j,y-30+((k*10+t*(W?80:0))%56)+yy,12,3);g.fillStyle(0xe5e7eb).fillTriangle(x-12+j,y+26+yy,x+12+j,y+26+yy,x+j,y+50+yy);if(W)for(let k=0;k<4;k++)g.fillStyle(0xffd23f,Math.random()).fillCircle(x+j+(Math.random()-.5)*34,y+48+Math.random()*8,2);B(x+34,y+30,34,20,0x8d6e63,4);g.fillStyle(0x222222).fillCircle(x+42,y+52,5).fillCircle(x+60,y+52,5);[[x+42,y+28,0x4cc9f0],[x+54,y+26,0xf72585],[x+62,y+29,0xffd60a]].forEach(q=>g.fillStyle(q[2]).fillCircle(q[0],q[1],6));if(Math.sin(t*6)>.7)g.fillStyle(0xffffff).fillRect(x+51,y+18,6,2).fillRect(x+53,y+16,2,6);if(sc){g.lineStyle(3,0xb517ff,.8).strokeCircle(x,y+30,50+Math.sin(t*5)*3);g.fillStyle(0xc77dff).fillTriangle(x-64,y+54,x-56,y+30,x-48,y+54)}}
+else{B(x-70,y+30,140,22,0x3b6ea5,5);g.fillStyle(0xffffff,.25).fillRect(x-60,y+40,120,2);B(x-70,y-44,16,78,0x94a3b8,4);B(x+54,y-44,16,78,0x94a3b8,4);B(x-70,y-56,140,16,0x1d4ed8,5);for(let k=0;k<7;k++)g.fillStyle(0xfff3b0,.6+.4*Math.sin(t*4+k)).fillCircle(x-54+k*18,y-48,3);const cc=[0xe63946,0xffb703,0x2a9d8f,0x8338ec][Math.floor(x/193)%4],cx=act?x-50+fr*100:x-40;B(cx-30,y+8,60,22,cc,8);B(cx-16,y-4,32,16,cc,6);g.fillStyle(0xbde0fe).fillRoundedRect(cx-12,y-2,24,10,3);g.fillStyle(0xfff59d).fillCircle(cx+28,y+17,3);g.fillStyle(0x111111).fillCircle(cx-17,y+32,7).fillCircle(cx+17,y+32,7);g.fillStyle(0xcbd5e1).fillCircle(cx-17,y+32,3).fillCircle(cx+17,y+32,3);if(W){g.lineStyle(2,0x7dd3fc,.7);for(let k=0;k<6;k++)g.lineBetween(x-30+k*12,y-40,x-34+k*12,y+4+(t*60+k*9)%12);for(let k=0;k<8;k++)g.fillStyle(0xffffff,.8).fillCircle(cx-24+k*7,y+6-((t*28+k*11)%22),3+k%3)}for(let k=0;k<(sc?5:2);k++)g.fillStyle(0x00c2ff).fillCircle(x-30+k*15,y-28+Math.sin(t*8+k)*3,6)}}
+mach0(g,id,x,y,t,fr,pop,yy,b,act){const sc=b.sc;
+ if(id=='oil'){const A=Math.sin(t*4)*.35*(act?1:.15)+pop*.3,cy=y-30+yy,dx=Math.cos(A)*45,dy=Math.sin(A)*45;g.fillStyle(0x333a4a).fillTriangle(x-22,y+40,x+22,y+40,x,cy);g.lineStyle(8,0xf4a300).lineBetween(x-dx,cy-dy,x+dx,cy+dy);g.fillStyle(0xc77d00).fillCircle(x+dx,cy+dy,8);g.fillStyle(0x1b1b1b).fillRect(x-38,y+38,76,12);g.fillStyle(0x2a6fdb).fillRect(x+36,y+22,20,30);if(sc){g.fillStyle(0xcfd8e3).fillRect(x-64,y-5,18,55);g.fillStyle(0xff6b00).fillCircle(x-55,y-12,6+Math.sin(t*10)*2)}}
+ else if(id=='food'){g.fillStyle(0xb5473a).fillRect(x-48,y+10+yy,96,42);g.fillStyle(0x2d2d2d).fillRect(x-42,y+yy,84,12);const by=y-20-fr*25+yy;g.fillStyle(0xe8a64a).fillEllipse(x,by,34,16);g.fillStyle(0x4caf50).fillRect(x-15,by+4,30,4);g.fillStyle(0x7a3b1d).fillRect(x-15,by+8,30,5);g.fillStyle(0xe8a64a).fillRect(x-15,by+13,30,5);if(sc)for(let k=0;k<6;k++)g.fillStyle(k%2?0xffffff:0xe63946).fillRect(x-54+k*18,y-52,18,14);if(act){const cx=x+62+Math.sin(t*3)*4;g.fillStyle(0xffd7a8).fillCircle(cx,y+20,7);g.fillStyle(0x3a86ff).fillRect(cx-7,y+27,14,20)}}
+ else if(id=='mine'){g.fillStyle(0x6e6e78).fillTriangle(x-60,y+50,x-5,y+50,x-35,y+5);g.fillStyle(0x8a8a96).fillTriangle(x+10,y+50,x+62,y+50,x+36,y+12);const j=act||pop>0?Math.sin(t*40)*2:0;g.fillStyle(0xd1495b).fillRect(x-14+j,y-40+yy,28,50);g.fillStyle(0xcccccc).fillTriangle(x-14+j,y+10+yy,x+14+j,y+10+yy,x+j,y+42+yy);[[x-48,y+44,0x4cc9f0],[x+4,y+48,0xf72585],[x+52,y+44,0xffd60a]].forEach(q=>g.fillStyle(q[2]).fillCircle(q[0],q[1],5));if(sc)g.lineStyle(3,0xb517ff,.8).strokeCircle(x,y+10,48+Math.sin(t*5)*3)}
+ else{g.fillStyle(0x3a6ea5).fillRect(x-65,y+25,130,28);g.fillStyle(0x9fb4c7).fillRect(x-65,y-40,12,70);g.fillRect(x+53,y-40,12,70);g.fillRect(x-65,y-48,130,12);const cx=act?x-50+fr*100:x-40;g.fillStyle(0xe63946).fillRoundedRect(cx-28,y+8,56,24,6);g.fillStyle(0xbde0fe).fillRect(cx-12,y+2,24,10);g.fillStyle(0x222222).fillCircle(cx-16,y+34,6).fillCircle(cx+16,y+34,6);if(act||pop>0)for(let k=0;k<5;k++)g.fillStyle(0xffffff,.7).fillCircle(x-40+k*20,y+25-((t*30+k*17)%40),3+k%3);if(sc)for(let k=0;k<4;k++)g.fillStyle(0x00c2ff).fillCircle(x-30+k*20,y-30+Math.sin(t*8+k)*3,6)}}}
+new Phaser.Game({type:Phaser.AUTO,parent:'stage',width:800,height:400,backgroundColor:'#141a2b',scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},scene:Main});
+setInterval(()=>ui(),100);setInterval(()=>S&&save(),5000);document.addEventListener('visibilitychange',()=>S&&save());
+menu();
+</script></body></html>
