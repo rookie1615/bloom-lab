@@ -1,214 +1,419 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#10121a">
-  <meta name="description" content="Discover your next favorite browser game at BloomArcade.">
-  <title>BloomArcade — Play Something Great</title>
+  <meta name="description" content="Discover your next favorite browser game at BloomLabs.">
+  <title>BloomLabs — Play Something Great</title>
+
   <style>
     * { box-sizing: border-box; }
+
+    :root {
+      --bg: #10121a;
+      --panel: #191c27;
+      --border: #292c38;
+      --mint: #8be3b1;
+      --text: #f5f7ff;
+      --muted: #a9afc0;
+    }
+
+    html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
-      background: #10121a;
-      color: #f5f7ff;
+      background: var(--bg);
+      color: var(--text);
       font-family: Inter, system-ui, Arial, sans-serif;
     }
+
     header {
-      height: 76px;
+      min-height: 68px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 7%;
-      border-bottom: 1px solid #292c38;
+      gap: 20px;
+      padding: 12px 5%;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(16, 18, 26, .96);
+      backdrop-filter: blur(12px);
     }
-    .logo { font-size: 23px; font-weight: 800; letter-spacing: -1px; }
-    .logo span { color: #8be3b1; }
+
+    .logo {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      white-space: nowrap;
+    }
+
+    .logo span { color: var(--mint); }
+
+    nav {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 22px;
+    }
+
     nav a {
       color: #b8bdcc;
       text-decoration: none;
-      margin-left: 24px;
+      font-size: 13px;
+      transition: color .2s;
+    }
+
+    nav a:hover { color: var(--mint); }
+
+    /* Smaller hero so games appear sooner */
+    .hero {
+      max-width: 1500px;
+      margin: auto;
+      padding: 35px 4% 25px;
+      text-align: left;
+    }
+
+    .hero-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .eyebrow {
+      color: var(--mint);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 2px;
+      font-weight: 800;
+    }
+
+    h1 {
+      font-size: clamp(29px, 3.5vw, 44px);
+      letter-spacing: -1.8px;
+      line-height: 1.1;
+      margin: 9px 0;
+    }
+
+    h1 span { color: var(--mint); }
+
+    .intro {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.6;
       font-size: 14px;
     }
-    .hero {
-      max-width: 1150px;
-      margin: auto;
-      padding: 90px 24px 65px;
-      text-align: center;
-    }
-    .eyebrow {
-      color: #8be3b1;
-      text-transform: uppercase;
-      font-size: 12px;
-      letter-spacing: 3px;
-      font-weight: 700;
-    }
-    h1 {
-      font-size: clamp(42px, 7vw, 76px);
-      letter-spacing: -4px;
-      line-height: 1.05;
-      margin: 22px 0;
-    }
-    h1 span { color: #8be3b1; }
-    .intro {
-      color: #a9afc0;
-      max-width: 520px;
-      margin: auto;
-      line-height: 1.8;
-      font-size: 16px;
-    }
+
     .search {
-      display: block;
-      width: min(100%, 440px);
-      margin: 32px auto 0;
-      padding: 15px 18px;
+      width: min(100%, 300px);
+      padding: 13px 15px;
       border: 1px solid #373b4b;
-      border-radius: 12px;
-      background: #191c27;
+      border-radius: 10px;
+      background: var(--panel);
       color: white;
-      font-size: 15px;
+      font-size: 14px;
       outline: none;
     }
-    .search:focus { border-color: #8be3b1; }
+
+    .search:focus { border-color: var(--mint); }
+
     .library {
-      max-width: 1150px;
-      padding: 0 24px 100px;
+      max-width: 1600px;
+      padding: 0 4% 70px;
       margin: auto;
     }
+
     .section-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 22px;
+      margin-bottom: 17px;
     }
-    h2 { font-size: 23px; letter-spacing: -0.5px; }
-    .count { color: #8d94a7; font-size: 13px; }
+
+    h2 {
+      font-size: 20px;
+      letter-spacing: -.5px;
+      margin: 0;
+    }
+
+    .count {
+      color: #8d94a7;
+      font-size: 12px;
+    }
+
+    /* Five cards across on wide screens */
     .grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 16px;
     }
+
     .game {
+      min-width: 0;
       overflow: hidden;
       border: 1px solid #2c3040;
-      border-radius: 16px;
-      background: #191c27;
+      border-radius: 13px;
+      background: var(--panel);
       transition: transform .2s, border-color .2s;
     }
-    .game:hover { transform: translateY(-4px); border-color: #555d70; }
+
+    .game:hover {
+      transform: translateY(-4px);
+      border-color: var(--mint);
+    }
+
     .art {
-      min-height: 170px;
+      aspect-ratio: 4 / 3;
       display: grid;
       place-items: center;
-      font-size: 65px;
-      background: radial-gradient(ellipse at 50% 80%, #34483f, #1a2530 65%, #171b26);
+      font-size: clamp(38px, 4vw, 58px);
+      background:
+        radial-gradient(ellipse at 50% 80%, #34483f, #1a2530 65%, #171b26);
     }
+
     .game:nth-child(2) .art {
       background: radial-gradient(ellipse at 50% 80%, #48335b, #282038 65%, #171b26);
     }
+
     .game:nth-child(3) .art {
       background: radial-gradient(ellipse at 50% 80%, #59412b, #30251f 65%, #171b26);
     }
-    .game-info { padding: 18px; }
-    .game-info h3 { margin: 0 0 8px; font-size: 17px; }
-    .game-info p { color: #9ca3b5; font-size: 13px; margin: 0 0 17px; }
+
+    .game:nth-child(4) .art {
+      background: radial-gradient(ellipse at 50% 80%, #244b5b, #192b39 65%, #171b26);
+    }
+
+    .game:nth-child(5) .art {
+      background: radial-gradient(ellipse at 50% 80%, #4b4930, #29291f 65%, #171b26);
+    }
+
+    .game-info { padding: 13px; }
+
+    .game-info h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .game-info p {
+      color: #9ca3b5;
+      font-size: 12px;
+      line-height: 1.5;
+      margin: 0 0 12px;
+    }
+
     .tag {
       display: inline-block;
       border: 1px solid #373d4c;
-      border-radius: 6px;
-      padding: 5px 8px;
+      border-radius: 5px;
+      padding: 5px 7px;
       color: #b8c1d0;
+      font-size: 10px;
+    }
+
+    .play-link {
+      display: block;
+      margin-top: 12px;
+      padding: 9px;
+      border-radius: 7px;
+      background: var(--mint);
+      color: #101a16;
+      text-align: center;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .play-link:hover { background: #b1f2cc; }
+
+    .coming-soon {
+      display: block;
+      margin-top: 12px;
+      padding: 9px;
+      border-radius: 7px;
+      background: #252a36;
+      color: #a9afc0;
+      text-align: center;
       font-size: 11px;
     }
+
     .empty {
       padding: 36px 10px;
-      color: #a9afc0;
+      color: var(--muted);
       text-align: center;
       display: none;
     }
+
+    #about {
+      border-top: 1px solid var(--border);
+      padding-top: 30px;
+    }
+
+    #about p {
+      max-width: 650px;
+      margin-top: 12px;
+    }
+
     footer {
-      border-top: 1px solid #292c38;
-      padding: 28px 7%;
+      border-top: 1px solid var(--border);
+      padding: 23px 5%;
       display: flex;
       justify-content: space-between;
       gap: 15px;
       color: #8d94a7;
       font-size: 12px;
     }
-    footer a { color: #b8bdcc; }
-    @media (max-width: 700px) {
-      header { padding: 0 20px; height: 68px; }
-      nav a { margin-left: 12px; font-size: 12px; }
-      .hero { padding-top: 65px; }
-      h1 { letter-spacing: -2px; }
-      .grid { grid-template-columns: 1fr; gap: 15px; }
-      .art { min-height: 145px; }
+
+    footer a { color: #b8bdcc; text-decoration: none; }
+    footer a:hover { color: var(--mint); }
+
+    /* Responsive layouts */
+    @media (max-width: 1200px) {
+      .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .hero-content { align-items: flex-start; flex-direction: column; }
+      .search { width: 100%; max-width: 450px; }
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 12px 4%; gap: 12px; }
+      .logo { font-size: 20px; }
+      nav { gap: 12px; }
+      nav a { font-size: 11px; }
+      .hero { padding-top: 25px; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .game-info { padding: 10px; }
+      .game-info h3 { font-size: 13px; }
+      .game-info p { font-size: 11px; }
       footer { flex-direction: column; }
+    }
+
+    @media (max-width: 360px) {
+      .grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
+
 <body>
   <header>
-    <div class="logo">Bloom<span>Arcade</span></div>
-    <nav>
+    <a class="logo" href="#" aria-label="BloomLabs home">
+      Bloom<span>Labs</span>
+    </a>
+
+    <nav aria-label="Main navigation">
       <a href="#games">Games</a>
       <a href="#about">About</a>
+      <!-- Future policy page: create privacy.html before publishing this link -->
+      <a href="privacy.html">Privacy</a>
     </nav>
   </header>
 
   <main>
     <section class="hero">
-      <div class="eyebrow">Your next favorite game awaits</div>
-      <h1>A little play.<br>A lot of <span>fun.</span></h1>
-      <p class="intro">Discover something new, challenge yourself, and find your next favorite game. Your arcade journey starts here.</p>
-      <input id="search" class="search" type="search"
-        placeholder="Search games..." aria-label="Search games">
+      <div class="hero-content">
+        <div>
+          <div class="eyebrow">Your next game starts here</div>
+          <h1>Find your next <span>favorite.</span></h1>
+          <p class="intro">Discover games. Jump straight into the fun.</p>
+        </div>
+
+        <input
+          id="search"
+          class="search"
+          type="search"
+          placeholder="Search games..."
+          aria-label="Search games"
+        >
+      </div>
     </section>
 
     <section class="library" id="games">
       <div class="section-head">
-        <h2>Explore the library</h2>
-        <span class="count" id="count">3 games coming soon</span>
+        <h2>Explore Games</h2>
+        <span class="count" id="count">5 games</span>
       </div>
+
       <div class="grid" id="grid">
+        <!-- Replace this placeholder path with your real game location -->
+        <article class="game" data-search="mini business tycoon simulation money">
+          <div class="art" aria-hidden="true">🏪</div>
+          <div class="game-info">
+            <h3>Mini Business Tycoon</h3>
+            <p>Build a business and grow your empire.</p>
+            <span class="tag">Simulation</span>
+            <a class="play-link" href="games/mini-business-tycoon/index.html">Play Game ↗</a>
+          </div>
+        </article>
+
         <article class="game" data-search="merge lab puzzle strategy">
           <div class="art" aria-hidden="true">◈</div>
           <div class="game-info">
             <h3>Merge Lab</h3>
-            <p>Combine, discover, and beat your high score.</p>
-            <span class="tag">Puzzle · Coming soon</span>
+            <p>Combine pieces and beat your high score.</p>
+            <span class="tag">Puzzle</span>
+            <span class="coming-soon">Coming Soon</span>
           </div>
         </article>
+
         <article class="game" data-search="neon dash arcade action reflex">
           <div class="art" aria-hidden="true">✳</div>
           <div class="game-info">
             <h3>Neon Dash</h3>
-            <p>React quickly, dodge obstacles, and go further.</p>
-            <span class="tag">Arcade · Coming soon</span>
+            <p>Dodge obstacles and go further.</p>
+            <span class="tag">Arcade</span>
+            <span class="coming-soon">Coming Soon</span>
           </div>
         </article>
+
         <article class="game" data-search="gravity grid physics puzzle">
           <div class="art" aria-hidden="true">⬡</div>
           <div class="game-info">
             <h3>Gravity Grid</h3>
-            <p>Think differently and solve clever challenges.</p>
-            <span class="tag">Strategy · Coming soon</span>
+            <p>Solve clever gravity-based challenges.</p>
+            <span class="tag">Strategy</span>
+            <span class="coming-soon">Coming Soon</span>
+          </div>
+        </article>
+
+        <article class="game" data-search="pixel jump platformer adventure">
+          <div class="art" aria-hidden="true">🎮</div>
+          <div class="game-info">
+            <h3>Pixel Jump</h3>
+            <p>Leap across platforms and explore.</p>
+            <span class="tag">Platformer</span>
+            <span class="coming-soon">Coming Soon</span>
           </div>
         </article>
       </div>
-      <div class="empty" id="empty">No games match that search. Try another title.</div>
+
+      <div class="empty" id="empty">
+        No games match that search. Try another title.
+      </div>
     </section>
 
     <section class="library" id="about">
-      <h2>Welcome to BloomArcade</h2>
-      <p class="intro">A growing collection of original browser games, built for curious minds and quick breaks. New experiences are on the way.</p>
+      <h2>About BloomLabs</h2>
+      <p class="intro">
+        BloomLabs is a growing collection of browser games made for quick
+        breaks, new challenges, and fun. More games are on the way.
+      </p>
     </section>
   </main>
 
   <footer>
-    <span>© <span id="year"></span> BloomArcade</span>
+    <span>© <span id="year"></span> BloomLabs</span>
     <span>Made for the love of play.</span>
+    <span><a href="privacy.html">Privacy Policy</a></span>
   </footer>
 
   <script>
@@ -219,21 +424,26 @@
     const count = document.getElementById("count");
     const empty = document.getElementById("empty");
 
-    search.addEventListener("input", () => {
+    function filterGames() {
       const query = search.value.trim().toLowerCase();
       let visible = 0;
 
       cards.forEach(card => {
         const match = (card.dataset.search + " " + card.innerText)
-          .toLowerCase().includes(query);
+          .toLowerCase()
+          .includes(query);
+
         card.style.display = match ? "" : "none";
         if (match) visible++;
       });
 
-      count.textContent = `${visible} game${visible === 1 ? "" : "s"} shown`;
+      count.textContent = `${visible} game${visible === 1 ? "" : "s"}`;
       empty.style.display = visible ? "none" : "block";
-    });
+    }
+
+    search.addEventListener("input", filterGames);
   </script>
 </body>
 </html>
+
 
