@@ -1,0 +1,78 @@
+cat > juke.html <<'EOF'
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Juke Run</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Graduate&family=Barlow+Condensed:wght@500;700&display=swap">
+<style>
+:root{
+  --turf:#1f5a32; --turf-dark:#1a4e2b; --chalk:#f2f5ee; --board:#101614; --panel:#0a0e0c; --line:#26322c;
+  --amber:#ffb627; --jersey:#d6453d; --muted:#9fb3a6;
+  --display:"Graduate", "Rockwell", Georgia, serif;
+  --body:"Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%;margin:0}
+body{background:var(--board);color:var(--chalk);font-family:var(--body);overflow:hidden;box-sizing:border-box;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  -webkit-user-select:none;user-select:none}
+[hidden]{display:none!important}
+.app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:8px;padding-block:8px;box-sizing:border-box}
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:6px}
+.cell{display:flex;flex-direction:column;align-items:center;gap:1px}
+.lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.val{font-family:var(--display);font-size:20px;color:var(--amber);font-variant-numeric:tabular-nums;text-shadow:0 0 8px rgba(255,182,39,.45)}
+.stage{position:relative;flex:1;min-height:0;border-radius:6px;overflow:hidden;border:2px solid var(--line)}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;background:rgba(10,14,12,.76);padding:20px}
+.overlay h1{font-family:var(--display);font-size:clamp(34px,10vw,52px);margin:0;line-height:1;color:var(--chalk)}
+.overlay h1 span{color:var(--amber)}
+.overlay p{margin:0;font-size:18px;color:var(--muted);max-width:32ch}
+.btn{font-family:var(--display);font-size:20px;background:var(--amber);color:#1a1205;border:0;border-radius:4px;padding:12px 28px;cursor:pointer}
+.btn:focus-visible,.juke:focus-visible{outline:3px solid var(--chalk);outline-offset:3px}
+.hint{font-size:14px;color:var(--muted);letter-spacing:.06em}
+.controls{height:128px;flex:none;display:flex;justify-content:space-between;align-items:center;padding-inline:6px;touch-action:none}
+.joy{width:116px;height:116px;border-radius:50%;background:radial-gradient(circle,#1a2420 0 55%,#141c19 56%);border:2px solid var(--line);position:relative;touch-action:none}
+.knob{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:var(--chalk);box-shadow:0 3px 0 #9aa79f;will-change:transform}
+.juke{--cd:1;width:104px;height:104px;border-radius:50%;border:0;cursor:pointer;touch-action:none;font-family:var(--display);font-size:20px;color:#1a1205;
+  background:conic-gradient(var(--amber) calc(var(--cd)*360deg),#3a3220 0);box-shadow:0 4px 0 #8a6210}
+.juke.cool{color:#8a7a55}
+.juke:active{transform:translateY(2px);box-shadow:0 2px 0 #8a6210}
+</style>
+
+<div class="app">
+  <div class="board">
+    <div class="cell"><span class="lbl">Score</span><span class="val" id="score">0</span></div>
+    <div class="cell"><span class="lbl">To go</span><span class="val" id="togo">100</span></div>
+    <div class="cell"><span class="lbl">Qtr</span><span class="val" id="qtr">1</span></div>
+    <div class="cell"><span class="lbl">Best</span><span class="val" id="best">0</span></div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+    <div class="overlay" id="overlay">
+      <h1>JUKE <span>RUN</span></h1>
+      <p id="msg">Defenders hunt you and lunge when they're close. Hit JUKE right as they get near to shake them. Juke a lunger for bonus. TD = 7.</p>
+      <button class="btn" id="go" type="button">Kick off</button>
+      <span class="hint">Joystick to run · JUKE button · Desktop: WASD/arrows + Space</span>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="joy" id="joy" aria-label="Joystick"><div class="knob" id="knob"></div></div>
+    <button class="juke" id="jukeBtn" type="button">JUKE</button>
+  </div>
+</div>
+
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),stage=document.getElementById('stage');
+const $=id=>document.getElementById(id);
+let W,H,dpr;
+function resize(){dpr=Math.min(window.devicePixelRatio||1,2);W=stage.clientWidth;H=stage.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener('resize',resize);resize();
+
+let best=0;try{best=+localStorage.getItem('jukeBest')||0}catch(e){}
+$('best').textContent=best;
+
+const PPY=()=>H/22, PR=()=>Math.max(13,W*0.034);
+const NUMS=[54,52,91,99,24,31,58,95,21,33,44,90,56,23];
+let st, running=false, last=0, keys={};
+function reset(){st={x:W/2,y:H*.78,vx:0,vy:0,ang:-Math.PI/2,score:0,yards
