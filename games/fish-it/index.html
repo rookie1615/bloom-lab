@@ -1,0 +1,189 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Fish It - BloomLabs</title><style>
+*{box-sizing:border-box;margin:0}
+body{background:#14202c;font-family:"Courier New",monospace;font-weight:bold;color:#f6e9c6;overflow:hidden;user-select:none;touch-action:manipulation}
+#g{position:relative;width:100vw;height:100vh;height:100dvh}
+canvas{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block}
+button{font:inherit;background:#e8a33d;color:#3b2410;border:3px solid #5a3510;box-shadow:0 3px 0 #5a3510;padding:6px 10px;cursor:pointer;margin:2px}
+button:active{transform:translateY(3px);box-shadow:none}button:disabled{opacity:.5}
+button:focus-visible{outline:3px solid #fff}
+#hud{position:absolute;top:6px;left:6px;right:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#hud span,#stat{background:#1a110acc;border:3px solid #c8934a;padding:4px 8px;font-size:14px}
+#stat{position:absolute;left:50%;bottom:92px;transform:translateX(-50%);white-space:nowrap}
+#bar{position:absolute;bottom:8px;left:0;right:0;display:flex;flex-direction:column;align-items:center}
+#cb{font-size:22px;padding:10px 34px;background:#6fd16f;border-color:#1f5a22;box-shadow:0 3px 0 #1f5a22}
+#reel{position:absolute;left:50%;top:22%;width:min(80%,420px);height:22px;transform:translateX(-50%);background:#000a;border:3px solid #fff}
+#zn{position:absolute;top:0;bottom:0;background:#6fd16faa}#mk{position:absolute;top:-5px;bottom:-5px;width:8px;background:#ff5080}#pg{position:absolute;left:0;bottom:-11px;height:5px;background:#ffb020}
+.ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#000a;padding:8px}
+.ov[hidden],#reel[hidden]{display:none}
+.p{position:relative;background:#3a2a1c;border:4px solid #c8934a;box-shadow:0 0 0 4px #1a110a;padding:12px;max-width:640px;width:100%;max-height:92vh;overflow:auto;font-size:14px}
+.p h2{margin-bottom:6px}.x{position:absolute;right:8px;top:6px;cursor:pointer;font-size:20px}
+.gr{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:8px}
+.it{border:3px solid;background:#241810;padding:5px;text-align:center;font-size:12px;display:flex;flex-direction:column;align-items:center}
+.it img,.fi{width:54px;image-rendering:pixelated}.row{display:flex;gap:8px;align-items:center;justify-content:space-between;border:3px solid #6b4a2a;background:#241810;padding:6px;margin-top:6px;flex-wrap:wrap}
+.row p{flex:1;min-width:160px;font-size:12px}.w{color:#ffd060;margin:6px 0}
+#title{background:linear-gradient(#86c9ef,#2f7fb0);flex-direction:column;gap:14px}#title h1{font-size:clamp(48px,14vw,110px);color:#ffd060;text-shadow:4px 4px 0 #5a3510,8px 8px 0 #1a110a;letter-spacing:4px}
+#toast{position:absolute;top:56px;left:50%;transform:translateX(-50%);background:#1a110a;border:3px solid #ffd060;padding:6px 12px;display:none;text-align:center;max-width:90%}
+#card{flex-direction:column;text-align:center;gap:6px}#card .fi{width:120px;animation:bb 1s infinite alternate}@keyframes bb{to{transform:translateY(-10px) rotate(5deg)}}
+@media(prefers-reduced-motion:reduce){#card .fi{animation:none}}
+</style></head><body><div id="g"><canvas id="c" width="320" height="180"></canvas>
+<div id="hud"><span id="mn"></span><span id="lc"></span><span id="eq"></span><button data-m="set">Settings</button></div>
+<div id="toast"></div><div id="reel" hidden><i id="zn"></i><b id="mk"></b><u id="pg"></u></div><div id="stat"></div>
+<div id="bar"><button id="cb">CAST</button><div><button data-m="pack">Backpack</button><button data-m="rod">Fishing Rod</button><button data-m="bait">Bait</button></div></div>
+<div id="card" class="ov" hidden></div><div id="mod" class="ov" hidden></div>
+<div id="title" class="ov"><h1>FISH IT</h1><p>a BloomLabs game</p><button id="play" style="font-size:26px;padding:10px 40px">PLAY</button></div></div>
+<script>
+const $=s=>document.querySelector(s),R=Math.random,ctx=$('#c').getContext('2d');
+const RN=['Common','Uncommon','Rare','Epic','Legendary','Mythic'],RC=['#c8d0d8','#6fd16f','#4aa3ff','#b060ff','#ffb020','#ff5080'],RM=[1,2.5,6,15,40,110],RW=[60,25,10,3.5,1.2,.3];
+const L=[{n:'Starter Pond',p:0,m:1,sp:5,sky:['#8ed0f0','#a6dcf4','#c2e8f6','#dff4fa'],wa:['#3b8fb0','#357fa0'],hl:'#7cc8e0',bk:'#4f9a3c',d:'Calm water. Mostly common fish. Great for learning.',
+f:'Bluegill|0|.2|1.2|#6a8fd0|A friendly little pond dweller.,Pond Minnow|0|.1|.5|#9fb0b8|Tiny and quick.,Golden Carp|1|1|4|#e8b830|Shimmers like a coin.,Mossy Perch|1|.5|2|#5f9a50|Covered in pond moss.,Moon Koi|2|2|6|#e8e8ff|Only glows under the evening sky.,Lilypad Pike|3|3|9|#3f8a60|A sly hunter hiding in the lilies.'},
+{n:'Forest River',p:800,m:3.5,sp:28,sky:['#6fb0c0','#88c4cc','#a4d4d0','#c4e4d8'],wa:['#2f7a78','#286a6a'],hl:'#68b8a8',bk:'#6a5a40',d:'Fast water, bigger fish and better prices.',
+f:'Creek Chub|0|.3|1.5|#a08060|Hides under mossy stones.,Riverside Trout|0|.5|3|#7a9a70|Loves quick currents.,Rainbow Trout|1|1|5|#e07a9a|Every scale a different color.,Stone Catfish|2|3|15|#7a7a88|Whiskers sense every ripple.,Amber Salmon|3|4|20|#e08040|Leaps up waterfalls.,Elder Sturgeon|4|20|90|#5a6a88|An ancient river giant.'},
+{n:'Tropical Ocean',p:8000,m:15,sp:12,sky:['#58b8f0','#78ccf4','#a0e0f8','#ffe8b0'],wa:['#1f78c8','#1a68b8'],hl:'#5cc0f0',bk:'#f0d890',d:'Exotic giants and the rarest catches.',
+f:'Sand Mullet|1|.5|3|#d0c8a0|Skims the sandy shallows.,Parrot Fish|2|1|8|#40d0a0|Crunches coral for breakfast.,Giant Tuna|3|20|80|#3858a8|Built for speed.,Reef Grouper|3|10|40|#d06a40|Rules its coral kingdom.,Sunfin Marlin|4|40|300|#40a0f0|Its fin burns gold at sunrise.,Aurora Whale|5|80|400|#a080ff|Sings lights across the sea.'}];
+L.forEach((l,i)=>l.f=l.f.split(',').map(s=>{const a=s.split('|');return{n:a[0],r:+a[1],a:+a[2],b:+a[3],c:a[4],d:a[5],loc:i}}));
+const ALL=L.flatMap(l=>l.f);
+const RD=[['Starter Rod',0,3,0,0,0,'#8a6a3a','Plain bamboo. Gets the job done.'],['Fiberglass Rod',80,10,.04,.15,0,'#4aa0c0','Flexible and forgiving.'],['Carbon Rod',600,25,.08,.3,.1,'#303038','Light, strong, sensitive.'],['Pro Rod',3000,70,.12,.45,.2,'#c05030','Tournament grade gear.'],['Legendary Rod',15000,400,.2,.7,.35,'#f0c040','Hums softly in your hands.']];
+const BT=[['Basic Bait',0,[1,1,1,1,1,1],'Free and unlimited.'],['Worm Bait',100,[1.2,1.5,1,1,1,1],'Wriggly and cheap.'],['Premium Bait',500,[.9,1.4,2,1.2,1,1],'Scented. Great for rare fish.'],['Rare Lure',2000,[.7,1,2,3,1.3,1],'Shiny. Epic fish love it.'],['Legendary Bait',8000,[.5,.8,1.5,3,4,2],'Glows. Legendary chances up a lot.']];
+const WK=[['Fishing Assistant',1500,20],['Skilled Angler',6000,70],['Expert Fisher',25000,220],['Master Angler',100000,700]];
+let S,st='idle',tm=0,cd=0,fish=null,parts=[],hold=0,rl={},menu=null,tab='fish',conf=0,flash=0,ring=0,tgt={x:150,y:100},T=0,ac=null,mus=0,hudT=0,svT=0;
+const def=()=>({m:0,inv:[],disc:{},rods:[1,0,0,0,0],rod:0,bs:[99,0,0,0,0],bait:0,loc:0,ul:[1,0,0],wk:[0,1,2,3].map(()=>({h:0,l:1,loc:0})),cap:20,snd:1,mus:0,seen:0,t:Date.now()});
+function load(){S=def();try{const j=JSON.parse(localStorage.getItem('fishit1'));if(j&&typeof j=='object'){for(const k in S)if(j[k]!==undefined&&typeof j[k]==typeof S[k]&&Array.isArray(j[k])==Array.isArray(S[k]))S[k]=j[k];
+S.inv=S.inv.filter(f=>f&&ALL.some(a=>a.n==f.n)&&f.v>=0);S.wk=[0,1,2,3].map(i=>Object.assign({h:0,l:1,loc:0},S.wk[i]));['rods','bs','ul'].forEach(k=>{const d=def()[k];S[k]=d.map((v,i)=>S[k][i]??v)});S.rods[0]=1;S.ul[0]=1;S.bs[0]=99;if(!(S.m>=0))S.m=0;if(!S.ul[S.loc])S.loc=0;if(!S.rods[S.rod])S.rod=0}}catch(e){S=def()}}
+function sv(){S.t=Date.now();try{localStorage.setItem('fishit1',JSON.stringify(S))}catch(e){}}
+const rate=()=>S.wk.reduce((a,w,i)=>a+(w.h?WK[i][2]*(1+.5*(w.l-1))*L[S.ul[w.loc]?w.loc:0].m/60:0),0);
+const $$=n=>'$'+Math.floor(n).toLocaleString();
+function tone(f,d=.1,t='square',v=.04){if(!S.snd||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function music(){clearInterval(mus);if(!S.mus)return;const n=[262,330,392,330,294,349,440,349];let i=0;mus=setInterval(()=>{if(S.mus)tone(n[i++%8],.5,'triangle',.02)},450)}
+let tt;function toast(t,c='#ffd060'){const e=$('#toast');e.textContent=t;e.style.borderColor=c;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',2600)}
+// fish sprites
+const IC={};function ic(f){if(!IC[f.n]){const c=document.createElement('canvas');c.width=18;c.height=12;const x=c.getContext('2d'),h=[...f.n].reduce((a,ch)=>a+ch.charCodeAt(0),0),n=h%3;x.fillStyle=f.c;
+for(let y=0;y<12;y++){const d=Math.abs(y-5.5)/5.5,hw=Math.round((n==1?7:6)*Math.sqrt(Math.max(0,1-d*d*(n==2?.6:1))));if(hw>0)x.fillRect(10-hw,y,hw*2,1)}
+for(let i=0;i<4;i++)x.fillRect(i,2+i,1,8-i*2);x.fillStyle='#fff5';x.fillRect(7,8,8,1);x.fillStyle='#0004';if(n==0){x.fillRect(8,2,1,8);x.fillRect(11,2,1,8)}else if(n==1){x.fillRect(7,4,2,2);x.fillRect(11,6,2,2)}else x.fillRect(8,0,5,2);
+x.fillStyle='#fff';x.fillRect(14,4,2,2);x.fillStyle='#000';x.fillRect(15,5,1,1);IC[f.n]=c.toDataURL()}return IC[f.n]}
+// fishing logic
+function pick(){const b=BT[S.bait][2],lk=RD[S.rod][5];const ws=L[S.loc].f.map(f=>RW[f.r]*b[f.r]*(1+(f.r>=2?lk*f.r*.5:0)));let r=R()*ws.reduce((a,v)=>a+v,0),i=0;while(i<ws.length-1&&(r-=ws[i])>0)i++;const f=L[S.loc].f[i];
+const w=+(f.a+(f.b-f.a)*Math.pow(R(),1.6)).toFixed(1),v=Math.max(1,Math.round(L[S.loc].m*4*RM[f.r]*(w/((f.a+f.b)/2))));return{n:f.n,r:f.r,w,v,f}}
+function act(){if(menu||!$('#title').hidden||!$('#card').hidden)return;if(st=='idle'&&cd<=0){if(S.inv.length>=S.cap)return toast('Backpack full! Sell fish or buy more space.','#ff5080');
+
+st='cast';tm=.7;tgt={x:110+R()*100,y:92+R()*30};tone(300,.15);sv()}else if(st=='wait'){st='idle';cd=.4}else if(st=='bite'){fish=pick();const rd=RD[S.rod];
+if(fish.w>rd[2]){st='idle';cd=1;toast(`The line snapped! A ${fish.w}kg ${fish.n} needs a rod rated above ${rd[2]}kg.`,'#ff5080');tone(120,.4,'sawtooth');return}
+const q=Math.min(2,fish.w/rd[2]);rl={p:.3,mp:.5,z:.5,tg:.5,zw:Math.max(.12,.28+rd[3]-.02*fish.r-.05*q),sp:.22+.07*fish.r+.18*q,tt:22};st='reel';$('#reel').hidden=false;tone(520,.1)}else if(st=='reel')hold=1}
+function lose(m){st='idle';cd=.8;hold=0;$('#reel').hidden=true;toast(m,'#ff5080');tone(140,.35,'sawtooth')}
+function got(){$('#reel').hidden=true;hold=0;st='res';S.inv.push({n:fish.n,r:fish.r,w:fish.w,v:fish.v});const nw=!S.disc[fish.n];S.disc[fish.n]=1;sv();
+const c=$('#card');c.innerHTML=`<div class=p style="text-align:center;border-color:${RC[fish.r]}">${nw?'<div class=w>NEW DISCOVERY!</div>':''}<img class=fi src="${ic(fish.f)}" style="filter:drop-shadow(0 0 8px ${RC[fish.r]})"><h2 style="color:${RC[fish.r]}">${fish.n}</h2><p>${RN[fish.r]} | ${fish.w} kg | worth ${$$(fish.v)}</p><p style="margin:6px 0;font-size:12px">${fish.f.d}</p><button id=ok>Nice!</button></div>`;c.hidden=false;$('#ok').focus();
+const n=20+fish.r*18;for(let i=0;i<n;i++)parts.push({x:160,y:95,vx:(R()-.5)*120,vy:-R()*110,l:1+R(),c:RC[fish.r]});if(fish.r>=4)flash=1;[523,659,784,1047].slice(0,Math.min(4,2+fish.r)).forEach((f,i)=>setTimeout(()=>tone(f,.2,'square',.05),i*110))}
+function up(dt){tm-=dt;cd-=dt;S.m+=rate()*dt;
+if(st=='cast'&&tm<=0){st='wait';tm=2+R()*4.5}else if(st=='wait'&&tm<=0){st='bite';tm=1+RD[S.rod][4];ring=0;tone(700,.12);setTimeout(()=>tone(500,.12),130)}else if(st=='bite'&&tm<=0){st='idle';cd=.6;toast('It got away...','#c8d0d8')}
+if(st=='reel'){const r=rl;r.tt-=dt;if(R()<dt*1.4)r.tg=r.zw/2+R()*(1-r.zw);const d=r.tg-r.z;r.z+=Math.sign(d)*Math.min(Math.abs(d),r.sp*dt);r.mp=Math.max(0,Math.min(1,r.mp+(hold?1.1:-.9)*dt));
+const inz=Math.abs(r.mp-r.z)<r.zw/2;r.p+=(inz?.3:-.2)*dt;if(r.p>=1)got();else if(r.p<=0)lose('The fish escaped!');else if(r.tt<=0)lose('The fish got away...');
+$('#zn').style.cssText=`left:${(r.z-r.zw/2)*100}%;width:${r.zw*100}%`;$('#mk').style.left=`calc(${r.mp*100}% - 4px)`;$('#pg').style.width=r.p*100+'%'}
+parts.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=160*dt;p.l-=dt});parts=parts.filter(p=>p.l>0);flash=Math.max(0,flash-dt);
+hudT-=dt;if(hudT<=0){hudT=.25;hud()}svT-=dt;if(svT<=0){svT=10;sv()}}
+const SM={idle:'Ready to fish',cast:'Casting...',wait:'Waiting for a bite...',bite:'A fish is biting! HOOK IT!',reel:'Reeling! Hold to pull the marker into the green zone',res:'Nice catch!'};
+function hud(){$('#mn').textContent=$$(S.m)+(rate()>0?' (+'+$$(rate()*60)+'/min)':'');$('#lc').textContent=L[S.loc].n;$('#eq').textContent=RD[S.rod][0]+' | '+BT[S.bait][0];
+$('#stat').textContent=SM[st];$('#cb').textContent={idle:'CAST',cast:'...',wait:'PULL BACK',bite:'HOOK!',reel:'HOLD TO REEL',res:'...'}[st];$('#cb').style.background=st=='bite'?'#ff5080':''}
+// drawing
+const hx=c=>[1,3,5].map(i=>parseInt(c.substr(i,2),16)),mix=(a,b,u)=>{a=hx(a);b=hx(b);return'rgb('+a.map((v,i)=>(v+(b[i]-v)*u)|0)+')'};
+let sd=7;const rn=()=>(sd=sd*16807%2147483647)/2147483647,mc=()=>{const c=document.createElement('canvas');c.width=320;c.height=180;return c};
+const PAL=[{s:['#5fb3ec','#d4f0f2'],w:['#7cd0d8','#1b5a78'],h:'#c8f4f4',t:'255,240,190,.07'},{s:['#6fb0c0','#e8f0cc'],w:['#5aa898','#0f3a44'],h:'#a8e8d0',t:'150,220,180,.09'},{s:['#2f98f0','#fff0c4'],w:['#3cc8e8','#0c4c9c'],h:'#d0f8ff',t:'255,220,150,.07'}],SX=[200,160,236],BG={},WC={};
+function disc(x,X,Y,r,c){x.fillStyle=c;for(let d=-r;d<=r;d++){const w=Math.sqrt(r*r-d*d)|0;x.fillRect(X-w,Y+d,2*w+1,1)}}
+function rock(x,X,Y,w,h,c){for(let d=-h;d<=h;d++){const ww=w*Math.sqrt(1-d*d/(h*h))|0;x.fillStyle=d<-h/3?mix(c,'#ffffff',.35):d>h/2?mix(c,'#000000',.4):c;x.fillRect(X-ww,Y+d,2*ww+1,1)}}
+function ridge(x,c,b,a,f,p){x.fillStyle=c;for(let q=0;q<320;q++){const h=Math.round(b+Math.sin(q*f+p)*a+Math.sin(q*f*2.7+p)*a*.4);x.fillRect(q,h,1,76-h)}}
+function leafy(x,X,Y,r,c0,c1,c2){disc(x,X+1,Y+2,r,c0);disc(x,X,Y,r-1,c1);disc(x,X-(r/3|0),Y-(r/3|0),(r/2|0)+1,c2)}
+function pine(x,X,Y,h,c0,c1){x.fillStyle='#2a1a10';x.fillRect(X,Y-3,2,5);for(let k=0;k<5;k++){const w=3+k*2,yy=(Y-h+k*(h/5))|0,hh=(h/5|0)+2;x.fillStyle=c0;x.fillRect(X+1-w,yy+3,w*2,hh);x.fillStyle=c1;x.fillRect(X+1-w,yy+3,w,hh)}}
+function palm(x,X,Y,h){x.fillStyle='#6a4a28';for(let k=0;k<h;k+=2){x.fillRect(X+(k>>2),Y-k,3,2)}const tx=X+(h>>2),ty=Y-h;for(const a of[-2.7,-2.2,-1.5,-.9,-.4]){for(let t=0;t<9;t++){x.fillStyle=t%2?'#2a9a44':'#1a7a34';x.fillRect(tx+Math.cos(a)*t*1.5|0,ty+(Math.sin(a)*t*.7+t*t*.08)|0,2,2)}}}
+function frond(x,X,Y,a,len){for(let t=0;t<len;t+=2){const px=X+Math.cos(a)*t|0,py=(Y+Math.sin(a)*t*.6+t*t*.012)|0;x.fillStyle=t%4?'#2a9a44':'#1a7a34';x.fillRect(px,py,3,2);if(t>8){x.fillStyle='#1f8a3a';x.fillRect(px-3,py+3,3,1);x.fillRect(px+3,py+3,3,1);x.fillStyle='#4ac060';x.fillRect(px-2,py+2,2,1)}}}
+function cloud(x,X,Y,k){x.globalAlpha=.9;disc(x,X+8,Y+2,6,'#cfe0f0');disc(x,X,Y+3,5,'#cfe0f0');disc(x,X+8,Y,6,'#fff');disc(x,X,Y+1,5,'#fff');disc(x,X+15,Y+2,4,'#fff');x.globalAlpha=1}
+function build(i){const P=PAL[i],sk=mc(),hl=mc(),fg=mc(),cp=mc(),a=sk.getContext('2d'),b=hl.getContext('2d'),f=fg.getContext('2d');sd=11+i*5;
+for(let y=0;y<76;y++){a.fillStyle=mix(P.s[0],P.s[1],Math.pow(y/75,.8));a.fillRect(0,y,320,1)}
+if(i!=1){const g=a.createRadialGradient(SX[i],i?44:40,2,SX[i],i?44:40,75);g.addColorStop(0,'rgba(255,250,210,.9)');g.addColorStop(1,'rgba(255,250,210,0)');a.fillStyle=g;a.fillRect(0,0,320,76);disc(a,SX[i],i?44:40,i?9:6,'#fffbe0')}
+if(i==0){ridge(b,'#9cc8b8',58,5,.025,1);ridge(b,'#6fae88',64,4,.04,3);ridge(b,'#4a9468',68,3,.06,5);for(let k=0;k<14;k++){const X=rn()*320|0,Y=67+(rn()*4|0),r=5+(rn()*6|0);b.fillStyle='#3a2616';b.fillRect(X,Y-2,2,6);leafy(b,X,Y-r,r,'#256a3a','#3f9a4a','#7acc5a')}b.fillStyle='#2d7a3a';b.fillRect(0,73,320,3)}
+else if(i==1){ridge(b,'#b4ccc8',44,10,.02,2);ridge(b,'#86aaa8',54,8,.03,4);ridge(b,'#4a7a74',60,5,.05,1);for(let q=-4;q<330;q+=9)pine(b,q,72-(rn()*4|0),24+(rn()*18|0),'#14402f','#2a6a44');b.fillStyle='#0f3026';b.fillRect(0,73,320,3);const g=b.createLinearGradient(0,30,0,76);g.addColorStop(0,'rgba(230,240,210,0)');g.addColorStop(1,'rgba(230,240,210,.35)');b.fillStyle=g;b.fillRect(0,30,320,46)}
+else{b.fillStyle='#2f7a50';for(let q=40;q<115;q++){const h=Math.round(72-Math.sin((q-40)/75*Math.PI)*9);b.fillRect(q,h,1,4)}palm(b,62,72,14);palm(b,86,72,11);b.fillStyle='#fff';for(let k=0;k<9;k++)b.fillRect(155,63+k,(k>>1)+1,1);b.fillStyle='#a04030';b.fillRect(151,73,12,2)}
+cp.getContext('2d').drawImage(sk,0,0);cp.getContext('2d').drawImage(hl,0,0);
+if(i==0){for(let y=152;y<180;y++){f.fillStyle=mix('#58a840','#1f5a2a',(y-152)/28);f.fillRect(0,y,320,1)}for(let q=0;q<320;q++){f.fillStyle='#6cc050';f.fillRect(q,151+Math.round(Math.sin(q*.05)*2+Math.sin(q*.17)),1,2)}
+for(let k=0;k<170;k++){const X=rn()*320|0,Y=152+(rn()*28|0),h=3+(rn()*7|0);f.fillStyle=mix('#2a6a2a','#8ad060',rn());f.fillRect(X,Y-h,1,h);if(rn()<.5)f.fillRect(X+(rn()<.5?-1:1),Y-h+1,1,h-1)}
+for(const q of[14,24,36,300,310])for(let j=0;j<3;j++){const X=q+j*3-3,h=36+(rn()*20|0);f.fillStyle='#3f8a34';f.fillRect(X,156-h,1,h);f.fillStyle='#8ad060';f.fillRect(X+1,162-h,1,h-6);f.fillStyle='#6a3a1c';f.fillRect(X-1,156-h,3,7);f.fillStyle='#9a5a2c';f.fillRect(X-1,156-h,1,7)}
+for(let k=0;k<30;k++){const X=rn()*320|0,Y=160+(rn()*18|0);f.fillStyle='#3a8a30';f.fillRect(X,Y-3,1,4);f.fillStyle=['#fff','#ffb0d0','#ffe060','#c8a0ff'][k%4];f.fillRect(X-1,Y-5,3,1);f.fillRect(X,Y-6,1,3);f.fillStyle='#ffd040';f.fillRect(X,Y-5,1,1)}rock(f,150,172,14,5,'#8a8a90');rock(f,170,175,8,3,'#7a7a80')}
+else if(i==1){for(let y=152;y<180;y++){f.fillStyle=mix('#8a7a5a','#2c261c',(y-152)/28);f.fillRect(0,y,320,1)}for(let k=0;k<70;k++)rock(f,rn()*320|0,153+(rn()*26|0),2+(rn()*4|0),2,mix('#6a6a70','#a8a090',rn()));
+rock(f,24,164,26,11,'#6c6c74');rock(f,50,172,16,6,'#7a7a82');rock(f,296,166,28,12,'#62626a');rock(f,270,175,14,5,'#808088');for(const q of[10,40,288,312])for(let j=0;j<7;j++){f.fillStyle=j%2?'#2f8a3c':'#1f6a30';for(let t=0;t<14;t++)f.fillRect(q+(j-3)*t*.8|0,150-t+(t*t*.04|0),2,2)}
+f.fillStyle='#3a8a3c';for(let k=0;k<30;k++)f.fillRect(rn()*320|0,152+(rn()*3|0),3,2)}
+else{for(let y=154;y<180;y++){f.fillStyle=mix('#c8a868','#f4dc9c',Math.min(1,(y-154)/10));if(y>170)f.fillStyle=mix('#f4dc9c','#d8b870',(y-170)/10);f.fillRect(0,y,320,1)}f.fillStyle='#e8cc88';for(let k=0;k<40;k++)f.fillRect(rn()*320|0,160+(rn()*20|0),6+(rn()*10|0),1);
+for(let k=0;k<12;k++){const X=rn()*320|0,Y=164+(rn()*14|0);f.fillStyle=['#ffd0d8','#fff','#e8a070'][k%3];f.fillRect(X,Y,3,2);f.fillStyle='#0002';f.fillRect(X,Y+2,3,1)}
+f.fillStyle='#ff7a50';for(const[X,Y]of[[60,172],[240,168]]){f.fillRect(X-4,Y,9,1);f.fillRect(X,Y-4,1,9);f.fillRect(X-2,Y-2,5,5)}
+[[-6,6,.15],[-6,6,.45],[-6,6,.8],[326,2,2.9],[326,2,2.55],[326,2,2.2]].forEach(r=>frond(f,r[0],r[1],r[2],82-(rn()*10|0)))}
+WC[i]=[];for(let y=0;y<105;y++)WC[i].push(mix(P.w[0],P.w[1],Math.pow(y/104,.75)));
+const vg=sk.getContext('2d');BG[i]={sk,hl,fg,cp}}
+function bob(x,X,Y,w){X=Math.round(X);Y=Math.round(Y);if(w){x.fillStyle='rgba(255,255,255,.45)';x.fillRect(X-5,Y,11,1);x.fillStyle='rgba(0,30,60,.3)';x.fillRect(X-4,Y+1,9,1);x.fillStyle='rgba(255,70,70,.25)';x.fillRect(X-2,Y+2,5,2)}
+x.fillStyle='#1c1c1c';x.fillRect(X,Y-12,1,5);x.fillStyle='#ff3b3b';x.fillRect(X-2,Y-7,5,1);x.fillRect(X-3,Y-6,7,2);x.fillStyle='#ff9a9a';x.fillRect(X-2,Y-6,1,1);x.fillStyle='#b01818';x.fillRect(X+2,Y-5,2,1);x.fillStyle='#fff';x.fillRect(X-3,Y-4,7,2);x.fillStyle='#c8d0d8';x.fillRect(X+2,Y-3,2,1);if(!w){x.fillStyle='#aaa';x.fillRect(X-2,Y-2,5,1);x.fillRect(X-1,Y-1,3,1)}}
+let VGr=null;
+function draw(t){const x=ctx,i=S.loc,P=PAL[i];if(!BG[i])build(i);const B=BG[i],sp=i==1?30:i==2?12:5;
+x.drawImage(B.sk,0,0);for(let k=0;k<4;k++)cloud(x,(t*(2+k)+k*105)%400-40,8+k*12,k);x.drawImage(B.hl,0,0);
+for(let y=0;y<105;y++){x.fillStyle=WC[i][y];x.fillRect(0,75+y,320,1)}
+for(let y=0;y<62;y++){x.globalAlpha=.42*(1-y/62);x.drawImage(B.cp,0,74-y,320,1,Math.round(Math.sin(t*1.6+y*.6)*(.5+y*.04)*(i==2?1.5:1)),75+y,320,1)}x.globalAlpha=1;
+if(i!=1)for(let k=0;k<14;k++){const w=Math.max(2,18-k);x.fillStyle='rgba(255,255,230,'+(.6-k*.035)+')';x.fillRect(SX[i]+Math.sin(t*3+k*2)*(2+k)-w/2|0,76+(k*k*.55|0),w,1)}
+for(let k=0;k<70;k++){const d=((k*37)%100)/100,yy=77+(d*d*100|0),sc=.4+d*1.6,xx=((k*91.7+t*sp*sc*(i==1?1:.6))%360)-20,len=((6+k%7*2)*sc)|0;x.globalAlpha=.25+.35*d*(k%3?.6:1);x.fillStyle=P.h;x.fillRect(xx,yy,len,1);x.fillStyle='rgba(0,30,60,.3)';x.fillRect(xx+2,yy+1,len*.7,1)}x.globalAlpha=1;
+x.fillStyle='#fff';for(let k=0;k<36;k++)if(Math.sin(t*2.3+k*7.1)>.93)x.fillRect((k*53)%320,80+(k*29)%70,1,1);
+if(i==2){for(let k=0;k<6;k++){const b=82+k*k*3+k*4;for(let q=0;q<320;q+=2){const s=Math.sin(q*.06+t*(.7+k*.15)+k*2),yy=b+Math.round(s*(1+k*.4));if(s>.55){x.fillStyle='rgba(255,255,255,.6)';x.fillRect(q,yy,2,1);x.fillStyle='rgba(10,60,140,.25)';x.fillRect(q,yy+1,2,1)}}}
+for(let q=0;q<320;q+=2){x.fillStyle='rgba(255,255,255,.75)';x.fillRect(q,156+Math.round(Math.sin(q*.04+t*.9)*2+Math.sin(t*.9)*3),2,2)}}
+if(i==0)for(const[X,Y]of[[42,150],[72,160],[252,148],[286,158]]){const yy=Y+Math.round(Math.sin(t+X)*.6);rock(x,X,yy,7,2,'#3a9a44');x.fillStyle='#1c5a2a';x.fillRect(X,yy,1,2);if(X%2==0){x.fillStyle='#ffb0d8';x.fillRect(X-1,yy-4,3,2);x.fillStyle='#fff';x.fillRect(X,yy-5,1,1)}}
+if(i==1)for(const[X,Y]of[[62,112],[262,124]]){rock(x,X,Y,12,5,'#7a7a82');x.strokeStyle='rgba(255,255,255,.5)';x.lineWidth=1;for(let k=0;k<2;k++){const r=((t*8+k*7)%14)+10;x.globalAlpha=1-r/24;x.beginPath();x.ellipse(X,Y+4,r,r/4,0,0,6.3);x.stroke()}x.globalAlpha=1}
+x.drawImage(B.fg,0,0);
+const rd=RD[S.rod],bend=st=='reel'?(rl.mp-.5)*10:0,tx=210+bend,ty=34+Math.sin(t*1.5)+(st=='cast'?Math.sin(tm/.7*Math.PI)*-12:0);
+const col=rd[6],hi=mix(col,'#ffffff',.55),sh=mix(col,'#000000',.55),bw=3+S.rod*.7,bz=u=>{const a=1-u;return[a*a*330+2*a*u*272+u*u*tx,a*a*190+2*a*u*112+u*u*ty]};
+for(let n=0;n<=80;n++){const u=n/80,p=bz(u),w=Math.max(1,Math.round(bw*(1-u*.85)+.5)),px=p[0]|0,py=p[1]|0;x.fillStyle='rgba(0,0,0,.3)';x.fillRect(px+2,py+3,w,w);if(u<.2){x.fillStyle=n%4<2?'#3a2618':'#5a3a22';x.fillRect(px,py,w,w)}else{x.fillStyle=col;x.fillRect(px,py,w,w);x.fillStyle=hi;x.fillRect(px,py-1,w,1);x.fillStyle=sh;x.fillRect(px,py+w,w,1)}}
+for(const u of[.2,.45,.7]){const p=bz(u);x.fillStyle=S.rod>=3?'#ffd060':'#c0c4cc';x.fillRect(p[0]-2|0,p[1]-2|0,bw|0+2,2)}
+for(const u of[.35,.55,.72,.88]){const p=bz(u),X=p[0]|0,Y=(p[1]|0)-3;x.fillStyle='#d0d4dc';x.fillRect(X-1,Y-1,3,1);x.fillRect(X-1,Y+1,3,1);x.fillRect(X-1,Y,1,1);x.fillRect(X+1,Y,1,1)}
+{const p=bz(.14),X=p[0]|0,Y=(p[1]|0)+8;x.fillStyle='#2a2a34';x.fillRect(X,Y-5,2,5);disc(x,X,Y,5,'#2a2a34');disc(x,X,Y,3,'#98a0b4');disc(x,X,Y,1,'#2a2a34');const a=st=='reel'?t*16:.8;x.fillStyle='#e8e8e8';x.fillRect(X+Math.cos(a)*5|0,Y+Math.sin(a)*5|0,2,2)}
+if(S.rod==4){const p=[tx,ty],g=x.createRadialGradient(p[0],p[1],0,p[0],p[1],14);g.addColorStop(0,'rgba(255,230,120,'+(.5+Math.sin(t*4)*.2)+')');g.addColorStop(1,'rgba(255,230,120,0)');x.fillStyle=g;x.fillRect(p[0]-14,p[1]-14,28,28);for(let k=0;k<5;k++){const u=(t*.4+k*.2)%1,q=bz(u);if(Math.sin(t*9+k*3)>0){x.fillStyle='#fff6c0';x.fillRect(q[0]|0,(q[1]|0)-2,1,1)}}}
+let bx,by,wat=false;if(st=='idle'||st=='res'){bx=tx-4;by=ty+40}else if(st=='cast'){const u=1-tm/.7;bx=tx+(tgt.x-tx)*u;by=ty+(tgt.y-ty)*u-Math.sin(u*Math.PI)*30+6}else{wat=true;bx=tgt.x;by=tgt.y+Math.sin(t*3);if(st=='bite'){by+=2+Math.sin(t*30)*2;ring+=.03}if(st=='reel'){bx=tgt.x+(tx-26-tgt.x)*rl.p*.8;by=tgt.y+(82-tgt.y)*rl.p*.5}}
+x.strokeStyle='rgba(255,255,255,.85)';x.lineWidth=.8;x.beginPath();x.moveTo(tx,ty);x.quadraticCurveTo((tx+bx)/2,Math.max(ty,by-12)+(st=='reel'||st=='bite'?2:9),bx,by-12);x.stroke();
+if(wat){x.strokeStyle='#fff';x.lineWidth=1;const n=st=='bite'?3:1;for(let k=0;k<n;k++){const r=st=='bite'?((ring*40+k*6)%18)+2:(t*5%10)+2;x.globalAlpha=Math.max(0,1-r/(st=='bite'?20:12))*.8;x.beginPath();x.ellipse(bx,by+1,r*1.6,r*.5,0,0,6.3);x.stroke()}x.globalAlpha=1;if(st=='bite'){x.fillStyle='#fff';for(let k=0;k<7;k++){const a=k*.9,r=(ring*60)%12;x.fillRect(bx+Math.cos(a)*r*1.3|0,by-Math.abs(Math.sin(a))*r*1.2|0,1,1)}}}
+bob(x,bx,by,wat);
+parts.forEach(p=>{x.fillStyle=p.c;x.fillRect(p.x,p.y,2,2)});
+x.fillStyle='rgba('+P.t+')';x.fillRect(0,0,320,180);if(!VGr){VGr=x.createRadialGradient(160,90,70,160,90,210);VGr.addColorStop(0,'rgba(0,0,0,0)');VGr.addColorStop(1,'rgba(0,10,25,.45)')}x.fillStyle=VGr;x.fillRect(0,0,320,180);
+if(flash>0){x.fillStyle=`rgba(255,240,180,${flash*.6})`;x.fillRect(0,0,320,180)}}
+let last=0;function loop(n){const dt=Math.min(.1,(n-last)/1000);last=n;T=n/1000;if($('#title').hidden)up(dt);draw(T);requestAnimationFrame(loop)}
+// menus
+const TABS=[['fish','Fish'],['book','Book'],['map','Places'],['crew','Crew']];
+const capCost=()=>S.cap*10;
+function mr(){const m=$('#mod');if(!menu){m.hidden=true;return}let h='<div class=p><b class=x onclick="A(\'x\')" title=Close>X</b>';
+if(menu=='pack'){h+='<div>'+TABS.map(t=>`<button onclick="A('t','${t[0]}')" ${tab==t[0]?'style=background:#ffd060':''}>${t[1]}</button>`).join('')+'</div>';
+if(tab=='fish'){const tv=S.inv.reduce((a,f)=>a+f.v,0);h+=`<h2>Backpack ${S.inv.length}/${S.cap}</h2><p>Total value ${$$(tv)}</p><button onclick="A('sa')">Sell all</button><button onclick="A('cap')">+10 slots ${$$(capCost())}</button>`;
+if(conf)h+=`<p class=w>Sell all ${S.inv.length} fish for ${$$(tv)}? <button onclick="A('sy')">Yes, sell</button><button onclick="A('nc')">Cancel</button></p>`;
+h+='<div class=gr>'+(S.inv.length?S.inv.map((f,i)=>`<div class=it style="border-color:${RC[f.r]}"><img src="${ic(ALL.find(a=>a.n==f.n))}"><b>${f.n}</b><i style="color:${RC[f.r]}">${RN[f.r]}</i><span>${f.w}kg</span><button onclick="A('s',${i})">Sell ${$$(f.v)}</button></div>`).join(''):'<p>Empty. Go cast a line!</p>')+'</div>'}
+else if(tab=='book'){h+=`<h2>Fish Book ${Object.keys(S.disc).length}/${ALL.length}</h2>`+L.map(l=>`<h3 style="margin-top:8px">${l.n}</h3><div class=gr>`+l.f.map(f=>{const d=S.disc[f.n];return`<div class=it style="border-color:${d?RC[f.r]:'#555'}"><img src="${ic(f)}" style="${d?'':'filter:brightness(0)'}"><b>${d?f.n:'???'}</b><i style="color:${d?RC[f.r]:'#888'}">${d?RN[f.r]:'Unknown'}</i><span>${l.n}</span></div>`}).join('')+'</div>').join('')}
+else if(tab=='map'){h+='<h2>Locations</h2>'+L.map((l,i)=>`<div class=row><p><b>${l.n}</b><br>${l.d}<br>Fish value x${l.m}</p>${S.ul[i]?(S.loc==i?'<b>HERE</b>':`<button onclick="A('go',${i})">Travel</button>`):`<button onclick="A('ul',${i})">Unlock ${$$(l.p)}</button>`}</div>`).join('')}
+else{h+='<h2>Fishing Crew</h2>';if(!S.ul[1])h+='<p class=w>Unlock the Forest River to start hiring workers.</p>';else h+='<p>Workers fish for you and earn money, even while you are away (up to 2 hours, at half pay).</p>'+WK.map((w,i)=>{const k=S.wk[i],lm=L[S.ul[k.loc]?k.loc:0].m,pm=w[2]*(1+.5*(k.l-1))*lm;
+return`<div class=row><p><b>${w[0]}</b> Lv${k.l}<br>${k.h?`Earns about ${$$(pm)}/min at ${L[k.loc].n}`:`Would earn about ${$$(w[2]*lm)}/min`}</p>${k.h?`<button onclick="A('wl',${i})">${L[k.loc].n}</button>${k.l<10?`<button onclick="A('wu',${i})">Upgrade ${$$(w[1]*.5*k.l)}</button>`:'MAX'}`:`<button onclick="A('wh',${i})">Hire ${$$(w[1])}</button>`}</div>`}).join('')}}
+else if(menu=='rod')h+='<h2>Fishing Rods</h2>'+RD.map((r,i)=>`<div class=row><p><b style="color:${r[6]==='#303038'?'#aab':r[6]}">${r[0]}</b><br>${r[7]}<br>Holds ${r[2]}kg | Easier reel +${r[3]*100}% | Hook time +${r[4]}s | Luck +${r[5]*100}%</p>${S.rod==i?'<b>EQUIPPED</b>':S.rods[i]?`<button onclick="A('re',${i})">Equip</button>`:`<button onclick="A('rb',${i})">Buy ${$$(r[1])}</button>`}</div>`).join('');
+else if(menu=='bait')h+='<h2>Bait Shop</h2><p>Bait is yours forever once you buy it. It changes rarity odds, never guarantees them. Your location decides which species appear.</p>'+BT.map((b,i)=>`<div class=row><p><b>${b[0]}</b> ${i&&S.bs[i]?'(owned)':''}<br>${b[3]}<br>Odds: ${b[2].map((v,k)=>v!=1?RN[k]+' x'+v:'').filter(Boolean).join(', ')||'Normal'}</p>${S.bait==i?'<b>EQUIPPED</b>':(i==0||S.bs[i]>0)?`<button onclick="A('be',${i})">Equip</button>`:''}${i&&!S.bs[i]?`<button onclick="A('bb',${i})">Buy ${$$(b[1])}</button>`:''}</div>`).join('');
+else if(menu=='set')h+=`<h2>Settings</h2><button onclick="A('snd')">Sound: ${S.snd?'ON':'OFF'}</button><button onclick="A('mus')">Music: ${S.mus?'ON':'OFF'}</button><button onclick="A('sv')">Save now</button><button onclick="A('tut')">How to play</button><hr style="margin:10px 0"><button onclick="A('rs')" style="background:#c04040">Reset progress</button>${conf?'<p class=w>This erases everything. <button onclick="A(\'ry\')">Yes, erase</button><button onclick="A(\'nc\')">Cancel</button></p>':''}`;
+else if(menu=='tut')h+='<h2>How to play</h2><p>1. Press CAST to throw your line.<br>2. When the bobber dips, press HOOK fast!<br>3. Hold the button (or Space) to move the red marker and keep it in the green zone.<br>4. Sell fish in your Backpack, then buy better rods and bait, unlock new places, and hire workers.<br>Heavier fish than your rod can hold will snap the line.</p><button onclick="A(\'x\')">Got it</button>';
+m.innerHTML=h+'</div>';m.hidden=false}
+function A(a,i){const buy=(c,f)=>{if(S.m<c)return toast('Not enough money! You need '+$$(c),'#ff5080');S.m-=c;f();tone(880,.15);sv();return 1};
+switch(a){case'x':menu=null;conf=0;break;case't':tab=i;conf=0;break;case'nc':conf=0;break;
+case's':{const f=S.inv.splice(i,1)[0];if(f){S.m+=f.v;toast('Sold '+f.n+' for '+$$(f.v));tone(988,.1);sv()}break}
+case'sa':if(S.inv.length)conf=1;else toast('Nothing to sell');break;
+case'sy':{const v=S.inv.reduce((a,f)=>a+f.v,0),n=S.inv.length;S.inv=[];S.m+=v;conf=0;toast(`Sold ${n} fish for ${$$(v)}`);tone(988,.2);sv();break}
+case'cap':buy(capCost(),()=>{S.cap+=10;toast('Backpack +10 slots')});break;
+case'go':S.loc=i;menu=null;toast('Welcome to '+L[i].n);break;
+case'ul':buy(L[i].p,()=>{S.ul[i]=1;S.loc=i;menu=null;toast(L[i].n+' unlocked!')});break;
+case'rb':buy(RD[i][1],()=>{S.rods[i]=1;S.rod=i;toast(RD[i][0]+' equipped!')});break;case're':S.rod=i;sv();break;
+case'bb':if(S.bs[i])break;buy(BT[i][1],()=>{S.bs[i]=1;S.bait=i;toast(BT[i][0]+' is yours forever!')});break;case'be':S.bait=i;sv();break;
+case'wh':buy(WK[i][1],()=>{S.wk[i].h=1;toast(WK[i][0]+' hired!')});break;
+case'wu':buy(WK[i][1]*.5*S.wk[i].l,()=>{S.wk[i].l++});break;
+case'wl':{let n=S.wk[i].loc;do n=(n+1)%3;while(!S.ul[n]);S.wk[i].loc=n;sv();break}
+case'snd':S.snd=!S.snd;sv();break;case'mus':S.mus=!S.mus;music();sv();break;case'sv':sv();toast('Game saved');break;case'tut':menu='tut';break;case'rs':conf=1;break;
+case'ry':localStorage.removeItem('fishit1');S=def();menu=null;conf=0;st='idle';toast('Progress reset');break}
+mr();hud()}
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{if(st=='reel'||st=='res')return;menu=b.dataset.m;tab='fish';conf=0;mr()});
+const cb=$('#cb');cb.onpointerdown=e=>{e.preventDefault();act()};['pointerup','pointerleave','pointercancel'].forEach(v=>cb.addEventListener(v,()=>hold=0));
+$('#c').onpointerdown=e=>{act()};$('#c').onpointerup=()=>hold=0;
+addEventListener('keydown',e=>{if(e.code=='Space'&&!e.repeat){e.preventDefault();act()}if(e.key=='Escape'&&menu)A('x')});addEventListener('keyup',e=>{if(e.code=='Space')hold=0});
+$('#card').onclick=e=>{if(e.target.id=='ok'||e.target.classList.contains('ov')){$('#card').hidden=true;st='idle';cd=.5}};
+addEventListener('beforeunload',sv);document.addEventListener('visibilitychange',()=>{if(document.hidden)sv()});
+$('#play').onclick=()=>{try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}$('#title').hidden=true;const away=Math.min((Date.now()-S.t)/1000,7200),e=rate()*away*.5;
+if(e>=1){S.m+=e;toast('Your crew earned '+$$(e)+' while you were away!')}if(!S.seen){S.seen=1;menu='tut';mr()}music();sv();hud()};
+load();hud();requestAnimationFrame(loop);
+</script></body></html>
