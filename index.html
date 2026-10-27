@@ -1,819 +1,666 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#080d18">
-  <title>BloomLabs | Play Something New</title>
-
-  <style>
-    :root {
-      --bg: #080d18;
-      --panel: #101a2b;
-      --panel-light: #152238;
-      --mint: #65f5c4;
-      --text: #f4f7fb;
-      --muted: #99a8bb;
-      --border: rgba(255,255,255,.09);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: Inter, Arial, sans-serif;
-      min-height: 100vh;
-    }
-
-    button, input {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .navbar {
-      height: 76px;
-      padding: 0 7%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      background: rgba(8,13,24,.95);
-    }
-
-    .logo {
-      font-size: 25px;
-      font-weight: 900;
-      letter-spacing: -1px;
-    }
-
-    .logo span {
-      color: var(--mint);
-    }
-
-    .nav-label {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .hero {
-      padding: 76px 20px 52px;
-      text-align: center;
-      background:
-        radial-gradient(ellipse at 50% 0%, rgba(58,214,164,.13), transparent 65%);
-    }
-
-    .eyebrow {
-      display: inline-block;
-      padding: 8px 13px;
-      border: 1px solid rgba(101,245,196,.25);
-      background: rgba(101,245,196,.07);
-      border-radius: 30px;
-      color: var(--mint);
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      margin-bottom: 22px;
-    }
-
-    h1 {
-      font-size: clamp(40px, 7vw, 76px);
-      line-height: 1.03;
-      letter-spacing: -3px;
-      max-width: 850px;
-      margin: 0 auto 20px;
-    }
-
-    h1 span {
-      color: var(--mint);
-    }
-
-    .hero p {
-      color: var(--muted);
-      max-width: 550px;
-      margin: 0 auto 30px;
-      line-height: 1.7;
-      font-size: 16px;
-    }
-
-    .search-wrap {
-      max-width: 490px;
-      margin: 0 auto;
-    }
-
-    .search-wrap input {
-      width: 100%;
-      padding: 16px 20px;
-      border: 1px solid var(--border);
-      border-radius: 13px;
-      background: var(--panel);
-      color: var(--text);
-      outline: none;
-    }
-
-    .search-wrap input:focus {
-      border-color: var(--mint);
-    }
-
-    .games-section {
-      max-width: 1250px;
-      margin: auto;
-      padding: 20px 24px 90px;
-    }
-
-    .section-heading {
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: 16px;
-      margin: 18px 0 27px;
-    }
-
-    .section-heading h2 {
-      font-size: 29px;
-      letter-spacing: -1px;
-    }
-
-    .section-heading p {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 8px;
-    }
-
-    .game-count {
-      color: var(--mint);
-      font-size: 13px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .games-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 20px;
-    }
-
-    .game-card {
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: var(--panel);
-      transition: transform .2s, border-color .2s;
-    }
-
-    .game-card:hover {
-      transform: translateY(-5px);
-      border-color: rgba(101,245,196,.45);
-    }
-
-    .game-art {
-      min-height: 165px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at 50% 45%, rgba(101,245,196,.17), transparent 65%),
-        linear-gradient(145deg, #182b3a, #111629);
-    }
-
-    .game-art .emoji {
-      font-size: 66px;
-      filter: drop-shadow(0 10px 20px rgba(0,0,0,.3));
-    }
-
-    .game-art .tag {
-      position: absolute;
-      left: 12px;
-      top: 12px;
-      border-radius: 7px;
-      padding: 6px 9px;
-      font-size: 10px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: .7px;
-      background: rgba(8,13,24,.8);
-      color: var(--mint);
-    }
-
-    .game-info {
-      padding: 18px;
-    }
-
-    .game-info h3 {
-      font-size: 17px;
-      margin-bottom: 8px;
-    }
-
-    .game-info p {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.6;
-      min-height: 39px;
-      margin-bottom: 17px;
-    }
-
-    .play-button {
-      width: 100%;
-      border: 0;
-      border-radius: 10px;
-      padding: 12px;
-      background: var(--mint);
-      color: #07150f;
-      font-weight: 900;
-      transition: filter .2s;
-    }
-
-    .play-button:hover {
-      filter: brightness(1.08);
-    }
-
-    .play-button:disabled {
-      opacity: .65;
-      cursor: not-allowed;
-    }
-
-    .about {
-      border-top: 1px solid var(--border);
-      padding: 55px 24px;
-      text-align: center;
-      background: rgba(255,255,255,.015);
-    }
-
-    .about h2 {
-      font-size: 26px;
-      margin-bottom: 14px;
-    }
-
-    .about p {
-      max-width: 600px;
-      margin: auto;
-      line-height: 1.8;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    footer {
-      padding: 25px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-      border-top: 1px solid var(--border);
-    }
-
-    /* GAME POPUP */
-
-    .game-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: rgba(3,6,12,.96);
-      padding: 16px;
-    }
-
-    .game-modal.open {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .game-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 0 14px;
-      flex-shrink: 0;
-    }
-
-    .game-toolbar h2 {
-      font-size: 17px;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    .toolbar-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .toolbar-button {
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 10px 13px;
-      background: var(--panel-light);
-      color: white;
-      font-size: 12px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .toolbar-button:hover {
-      border-color: var(--mint);
-    }
-
-    .close-button {
-      background: #39202b;
-      border-color: #623144;
-    }
-
-    .game-stage {
-      flex: 1;
-      min-height: 0;
-      width: 100%;
-      max-width: 1500px;
-      margin: 0 auto;
-      position: relative;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #080d18;
-    }
-
-    .game-stage iframe {
-      display: block;
-      width: 100%;
-      height: 100%;
-      border: 0;
-      background: white;
-    }
-
-    .loading-screen {
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 14px;
-      padding: 24px;
-      background: #080d18;
-      text-align: center;
-    }
-
-    .loading-screen.hidden {
-      display: none;
-    }
-
-    .spinner {
-      width: 42px;
-      height: 42px;
-      border: 4px solid rgba(255,255,255,.12);
-      border-top-color: var(--mint);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .loading-screen h3 {
-      font-size: 20px;
-    }
-
-    .loading-screen p {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.6;
-      max-width: 400px;
-    }
-
-    .ad-placeholder {
-      margin-top: 8px;
-      width: min(100%, 500px);
-      min-height: 75px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px dashed rgba(255,255,255,.2);
-      border-radius: 9px;
-      color: #76859a;
-      font-size: 11px;
-      letter-spacing: 1px;
-    }
-
-    .loading-error {
-      display: none;
-      color: #ffb5b5 !important;
-    }
-
-    .loading-error.visible {
-      display: block;
-    }
-
-    @media (max-width: 1000px) {
-      .games-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 560px) {
-      .navbar {
-        height: 65px;
-        padding: 0 20px;
-      }
-
-      .nav-label {
-        font-size: 11px;
-      }
-
-      .hero {
-        padding-top: 58px;
-      }
-
-      .games-section {
-        padding-left: 16px;
-        padding-right: 16px;
-      }
-
-      .games-grid {
-        gap: 12px;
-      }
-
-      .game-art {
-        min-height: 125px;
-      }
-
-      .game-art .emoji {
-        font-size: 48px;
-      }
-
-      .game-info {
-        padding: 12px;
-      }
-
-      .game-info h3 {
-        font-size: 15px;
-      }
-
-      .game-info p {
-        font-size: 11px;
-      }
-
-      .section-heading h2 {
-        font-size: 24px;
-      }
-
-      .game-modal {
-        padding: 8px;
-      }
-
-      .game-toolbar {
-        padding-top: 5px;
-      }
-
-      .game-toolbar h2 {
-        font-size: 14px;
-      }
-
-      .toolbar-button {
-        padding: 9px 10px;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BloomLabs | Play Something New</title>
+
+<style>
+:root {
+  --bg: #080d18;
+  --panel: #111c2d;
+  --mint: #65f5c4;
+  --text: #f4f7fb;
+  --muted: #9baabd;
+  --border: rgba(255,255,255,.1);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+
+button, input { font: inherit; }
+button { cursor: pointer; }
+.hidden { display: none !important; }
+
+.navbar {
+  height: 72px;
+  padding: 0 7%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  font-size: 26px;
+  font-weight: 900;
+  color: white;
+  text-decoration: none;
+}
+
+.logo span { color: var(--mint); }
+
+.nav-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.hero {
+  padding: 65px 20px 45px;
+  text-align: center;
+  background: radial-gradient(ellipse at top, #15352f, transparent 70%);
+}
+
+.eyebrow {
+  display: inline-block;
+  color: var(--mint);
+  border: 1px solid #285b4d;
+  background: #102720;
+  padding: 8px 13px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+h1 {
+  margin: 22px 0 15px;
+  font-size: clamp(40px, 7vw, 72px);
+  line-height: 1.04;
+  letter-spacing: -3px;
+}
+
+h1 span { color: var(--mint); }
+
+.hero p {
+  max-width: 560px;
+  margin: 0 auto 25px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.search {
+  width: min(450px, 100%);
+  padding: 14px 17px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: white;
+  outline: none;
+}
+
+.search:focus { border-color: var(--mint); }
+
+.container {
+  max-width: 1250px;
+  width: calc(100% - 36px);
+  margin: 0 auto;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 15px;
+  margin: 30px 0 22px;
+}
+
+.section-heading h2 {
+  font-size: 28px;
+  margin: 0;
+}
+
+.section-heading p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  padding-bottom: 65px;
+}
+
+.game-card {
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: transform .2s, border-color .2s;
+}
+
+.game-card:hover {
+  transform: translateY(-4px);
+  border-color: #397963;
+}
+
+.game-art {
+  height: 150px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  background: radial-gradient(circle, #244d49, #131b2d 75%);
+}
+
+.game-art.purple {
+  background: radial-gradient(circle, #3e326e, #131b2d 75%);
+}
+
+.game-art.orange {
+  background: radial-gradient(circle, #70472d, #131b2d 75%);
+}
+
+.game-art.blue {
+  background: radial-gradient(circle, #254f7b, #131b2d 75%);
+}
+
+.emoji {
+  font-size: 58px;
+}
+
+.tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #0b1421;
+  color: var(--mint);
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.game-info { padding: 16px; }
+
+.game-info h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.game-info p {
+  margin: 0 0 16px;
+  min-height: 38px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.play-button {
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--mint);
+  color: #061910;
+  font-weight: bold;
+}
+
+.play-button:hover { filter: brightness(1.08); }
+
+.play-button:disabled {
+  background: #293448;
+  color: #94a0b1;
+  cursor: not-allowed;
+}
+
+/* PLAYER SECTION */
+
+#playerSection {
+  display: none;
+  padding: 25px 0 30px;
+  border-top: 1px solid var(--border);
+  background: #0b111e;
+  scroll-margin-top: 12px;
+}
+
+#playerSection.visible { display: block; }
+
+.player-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.player-heading h2 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.player-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.control-button {
+  padding: 10px 13px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: #172337;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.control-button:hover { border-color: var(--mint); }
+
+.close-player {
+  background: #38212b;
+  border-color: #5b3341;
+}
+
+/* Smaller player before fullscreen */
+
+.player-box {
+  position: relative;
+  width: 100%;
+  max-width: 950px;
+  height: min(58vw, 540px);
+  min-height: 300px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid #293548;
+  border-radius: 13px;
+  background: #05080e;
+}
+
+.player-box iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0;
+  background: #080d18;
+}
+
+.start-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  text-align: center;
+  background:
+    radial-gradient(ellipse at center, rgba(37,91,77,.5), transparent 65%),
+    #0b1422;
+}
+
+.start-icon {
+  font-size: 55px;
+  margin-bottom: 12px;
+}
+
+.start-screen h3 {
+  font-size: 25px;
+  margin: 0 0 10px;
+}
+
+.start-screen p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 22px;
+}
+
+.start-button {
+  border: 0;
+  border-radius: 12px;
+  padding: 15px 27px;
+  color: #061910;
+  background: var(--mint);
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.start-button:hover { filter: brightness(1.1); }
+
+.ad-placeholder {
+  width: min(450px, 90%);
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 22px;
+  border: 1px dashed #344052;
+  border-radius: 8px;
+  color: #718096;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+/* Fullscreen expands the player only when requested */
+
+.player-box:fullscreen {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.player-box:fullscreen iframe {
+  width: 100%;
+  height: 100%;
+}
+
+.player-box:fullscreen .start-screen {
+  background:
+    radial-gradient(ellipse at center, rgba(37,91,77,.55), transparent 65%),
+    #080d18;
+}
+
+.about {
+  border-top: 1px solid var(--border);
+  padding: 55px 20px;
+  text-align: center;
+}
+
+.about h2 { margin-bottom: 12px; }
+
+.about p {
+  max-width: 620px;
+  margin: auto;
+  color: var(--muted);
+  line-height: 1.8;
+  font-size: 14px;
+}
+
+footer {
+  border-top: 1px solid var(--border);
+  padding: 24px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .game-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 550px) {
+  .navbar { padding: 0 18px; }
+  .nav-note { font-size: 9px; }
+  .hero { padding-top: 48px; }
+  .container { width: calc(100% - 24px); }
+  .game-grid { gap: 11px; }
+  .game-art { height: 115px; }
+  .emoji { font-size: 43px; }
+  .game-info { padding: 11px; }
+  .game-info h3 { font-size: 14px; }
+  .game-info p { font-size: 11px; }
+  .player-box {
+    height: 58vw;
+    min-height: 240px;
+  }
+  .player-heading h2 { font-size: 16px; }
+  .control-button { padding: 9px; font-size: 11px; }
+  .start-screen h3 { font-size: 21px; }
+}
+</style>
 </head>
 
 <body>
-  <header class="navbar">
-    <a href="#" class="logo">Bloom<span>Labs</span></a>
-    <div class="nav-label">YOUR NEXT FAVORITE GAME STARTS HERE</div>
-  </header>
 
-  <main>
-    <section class="hero">
-      <div class="eyebrow">WELCOME TO BLOOMLABS</div>
-      <h1>Less scrolling.<br><span>More playing.</span></h1>
-      <p>
-        Discover fun browser games, build something awesome,
-        and jump straight into the action. No downloads required.
-      </p>
+<header class="navbar">
+  <a href="#" class="logo">Bloom<span>Labs</span></a>
+  <div class="nav-note">YOUR NEXT FAVORITE GAME STARTS HERE</div>
+</header>
 
-      <div class="search-wrap">
-        <input
-          type="search"
-          id="gameSearch"
-          placeholder="Search games..."
-          aria-label="Search games"
-        >
-      </div>
-    </section>
-
-    <section class="games-section" id="games">
-      <div class="section-heading">
-        <div>
-          <h2>Explore Games</h2>
-          <p>Pick a game and start playing.</p>
-        </div>
-        <div class="game-count" id="gameCount">4 GAMES</div>
-      </div>
-
-      <div class="games-grid" id="gamesGrid">
-
-        <!-- GAME 1: UPDATE THIS PATH IF YOUR FILE IS ELSEWHERE -->
-        <article class="game-card" data-search="tiny business tycoon simulator money idle">
-          <div class="game-art">
-            <span class="tag">Featured</span>
-            <span class="emoji">🏢</span>
-          </div>
-          <div class="game-info">
-            <h3>Tiny Business Tycoon</h3>
-            <p>Start small, grow your business, and build your empire.</p>
-            <button
-              class="play-button"
-              data-title="Tiny Business Tycoon"
-              data-game-path="/games/mini-business-tycoon/index.html"
-            >▶ Play Now</button>
-          </div>
-        </article>
-
-        <!-- PLACEHOLDER GAME 2 -->
-        <article class="game-card" data-search="neon racer racing cars driving">
-          <div class="game-art">
-            <span class="tag">Coming Soon</span>
-            <span class="emoji">🏎️</span>
-          </div>
-          <div class="game-info">
-            <h3>Neon Racer</h3>
-            <p>Race through glowing streets and chase the fastest time.</p>
-            <button class="play-button" disabled>Coming Soon</button>
-          </div>
-        </article>
-
-        <!-- PLACEHOLDER GAME 3 -->
-        <article class="game-card" data-search="pixel quest adventure dungeon">
-          <div class="game-art">
-            <span class="tag">Coming Soon</span>
-            <span class="emoji">⚔️</span>
-          </div>
-          <div class="game-info">
-            <h3>Pixel Quest</h3>
-            <p>Explore a pixel world packed with challenges and surprises.</p>
-            <button class="play-button" disabled>Coming Soon</button>
-          </div>
-        </article>
-
-        <!-- PLACEHOLDER GAME 4 -->
-        <article class="game-card" data-search="brain break puzzle logic">
-          <div class="game-art">
-            <span class="tag">Coming Soon</span>
-            <span class="emoji">🧩</span>
-          </div>
-          <div class="game-info">
-            <h3>Brain Break</h3>
-            <p>Test your logic with quick puzzles and clever challenges.</p>
-            <button class="play-button" disabled>Coming Soon</button>
-          </div>
-        </article>
-
-      </div>
-    </section>
-
-    <section class="about">
-      <h2>Welcome to BloomLabs</h2>
-      <p>
-        We're building a growing collection of fun, accessible browser games.
-        Find a game, open it instantly, and enjoy the experience right here
-        on BloomLabs.
-      </p>
-    </section>
-  </main>
-
-  <footer>
-    © 2026 BloomLabs. Made for players.
-  </footer>
-
-  <!-- GAME POPUP -->
-  <div
-    class="game-modal"
-    id="gameModal"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Game player"
-    aria-hidden="true"
+<section class="hero">
+  <div class="eyebrow">WELCOME TO BLOOMLABS</div>
+  <h1>Less scrolling.<br><span>More playing.</span></h1>
+  <p>
+    Discover fun browser games, start playing when you're ready,
+    and explore something new every day.
+  </p>
+  <input
+    class="search"
+    id="searchInput"
+    type="search"
+    placeholder="Search games..."
+    aria-label="Search games"
   >
-    <div class="game-toolbar">
-      <h2 id="modalGameTitle">Loading game...</h2>
+</section>
 
-      <div class="toolbar-actions">
-        <button class="toolbar-button" id="fullscreenButton">
-          ⛶ Fullscreen
-        </button>
-        <button class="toolbar-button close-button" id="closeButton">
-          ✕ Close
-        </button>
+<main>
+  <section class="container">
+    <div class="section-heading">
+      <div>
+        <h2>Explore Games</h2>
+        <p>Choose a game to open its player.</p>
       </div>
+      <span id="gameCount" style="color:var(--mint);font-size:12px">
+        4 GAMES
+      </span>
     </div>
 
-    <div class="game-stage" id="gameStage">
-      <iframe
-        id="gameFrame"
-        title="BloomLabs game"
-        allow="fullscreen; autoplay; gamepad"
-        allowfullscreen
-      ></iframe>
+    <div class="game-grid" id="gameGrid">
 
-      <div class="loading-screen" id="loadingScreen">
-        <div class="spinner" id="loadingSpinner"></div>
-        <h3 id="loadingTitle">Loading your game...</h3>
-        <p id="loadingMessage">
-          Get ready. Your game will appear here in a moment.
-        </p>
-
-        <!-- FUTURE AD PLACEMENT:
-             Replace this placeholder with your approved ad provider code.
-             This placeholder does NOT display real ads or earn revenue. -->
-        <div class="ad-placeholder">
-          ADVERTISEMENT SPACE
+      <article class="game-card" data-search="tiny business tycoon business simulator money idle">
+        <div class="game-art">
+          <span class="tag">Featured</span>
+          <span class="emoji">🏢</span>
         </div>
+        <div class="game-info">
+          <h3>Tiny Business Tycoon</h3>
+          <p>Start a business, earn money, and build your empire.</p>
+          <button
+            class="play-button open-game"
+            data-title="Tiny Business Tycoon"
+            data-path="/games/mini-business-tycoon/index.html"
+          >▶ Play Game</button>
+        </div>
+      </article>
 
-        <p class="loading-error" id="loadingError">
-          The game could not be loaded. Check the game file path and try again.
-        </p>
+      <article class="game-card" data-search="neon racer racing cars driving">
+        <div class="game-art purple">
+          <span class="tag">Coming Soon</span>
+          <span class="emoji">🏎️</span>
+        </div>
+        <div class="game-info">
+          <h3>Neon Racer</h3>
+          <p>Race through neon streets and beat your best time.</p>
+          <button class="play-button" disabled>Coming Soon</button>
+        </div>
+      </article>
 
-        <button
-          class="toolbar-button"
-          id="retryButton"
-          style="display:none"
-        >Try Again</button>
+      <article class="game-card" data-search="pixel quest adventure fantasy">
+        <div class="game-art orange">
+          <span class="tag">Coming Soon</span>
+          <span class="emoji">⚔️</span>
+        </div>
+        <div class="game-info">
+          <h3>Pixel Quest</h3>
+          <p>Explore a pixel world filled with new challenges.</p>
+          <button class="play-button" disabled>Coming Soon</button>
+        </div>
+      </article>
+
+      <article class="game-card" data-search="brain break puzzle logic">
+        <div class="game-art blue">
+          <span class="tag">Coming Soon</span>
+          <span class="emoji">🧩</span>
+        </div>
+        <div class="game-info">
+          <h3>Brain Break</h3>
+          <p>Take on quick puzzles and test your brain.</p>
+          <button class="play-button" disabled>Coming Soon</button>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- The player appears here when a game card is clicked -->
+  <section id="playerSection">
+    <div class="container">
+      <div class="player-heading">
+        <h2 id="playerTitle">Game Preview</h2>
+        <div class="player-actions">
+          <button class="control-button" id="fullscreenButton">
+            ⛶ Fullscreen
+          </button>
+          <button class="control-button close-player" id="closeButton">
+            ✕ Close
+          </button>
+        </div>
+      </div>
+
+      <div class="player-box" id="playerBox">
+        <iframe
+          id="gameFrame"
+          title="Game player"
+          allow="fullscreen; autoplay; gamepad"
+          allowfullscreen
+        ></iframe>
+
+        <!-- This overlay stays here until Start Game is clicked -->
+        <div class="start-screen" id="startScreen">
+          <div class="start-icon">🎮</div>
+          <h3 id="startTitle">Ready to play?</h3>
+          <p>Your game won't start until you press the button.</p>
+          <button class="start-button" id="startButton">
+            ▶ Start Game
+          </button>
+          <div class="ad-placeholder">ADVERTISEMENT SPACE</div>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <script>
-    // SEARCH GAMES
-    const searchInput = document.getElementById("gameSearch");
-    const gameCards = Array.from(document.querySelectorAll(".game-card"));
-    const gameCount = document.getElementById("gameCount");
+  <section class="about">
+    <h2>Welcome to BloomLabs</h2>
+    <p>
+      We're building a growing collection of browser games.
+      Pick a game, start it when you're ready, and discover
+      more games as you scroll.
+    </p>
+  </section>
+</main>
 
-    function filterGames() {
-      const query = searchInput.value.toLowerCase().trim();
-      let visible = 0;
+<footer>© 2026 BloomLabs. Made for players.</footer>
 
-      gameCards.forEach(card => {
-        const searchableText =
-          (card.dataset.search || "") + " " + card.innerText;
+<script>
+const searchInput = document.getElementById("searchInput");
+const gameCards = [...document.querySelectorAll(".game-card")];
+const gameCount = document.getElementById("gameCount");
 
-        const matches = searchableText.toLowerCase().includes(query);
+const playerSection = document.getElementById("playerSection");
+const playerBox = document.getElementById("playerBox");
+const playerTitle = document.getElementById("playerTitle");
+const startTitle = document.getElementById("startTitle");
+const startScreen = document.getElementById("startScreen");
+const startButton = document.getElementById("startButton");
+const gameFrame = document.getElementById("gameFrame");
 
-        card.style.display = matches ? "" : "none";
+let selectedGamePath = "";
+let selectedGameTitle = "";
+let gameStarted = false;
 
-        if (matches) visible++;
-      });
+// Search/filter the game cards.
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.toLowerCase().trim();
+  let visible = 0;
 
-      gameCount.textContent = visible + (visible === 1 ? " GAME" : " GAMES");
-    }
+  gameCards.forEach(card => {
+    const matches = (
+      card.dataset.search + " " + card.innerText
+    ).toLowerCase().includes(query);
 
-    searchInput.addEventListener("input", filterGames);
+    card.style.display = matches ? "" : "none";
+    if (matches) visible++;
+  });
 
-    // GAME POPUP ELEMENTS
-    const modal = document.getElementById("gameModal");
-    const stage = document.getElementById("gameStage");
-    const frame = document.getElementById("gameFrame");
-    const modalTitle = document.getElementById("modalGameTitle");
-    const loadingScreen = document.getElementById("loadingScreen");
-    const loadingTitle = document.getElementById("loadingTitle");
-    const loadingMessage = document.getElementById("loadingMessage");
-    const loadingSpinner = document.getElementById("loadingSpinner");
-    const loadingError = document.getElementById("loadingError");
-    const retryButton = document.getElementById("retryButton");
-    const closeButton = document.getElementById("closeButton");
-    const fullscreenButton = document.getElementById("fullscreenButton");
+  gameCount.textContent =
+    visible + (visible === 1 ? " GAME" : " GAMES");
+});
 
-    let currentGamePath = "";
-    let loadingTimer = null;
-    let gameHasLoaded = false;
+// Clicking a game opens a smaller preview, but does NOT load the game.
+document.querySelectorAll(".open-game").forEach(button => {
+  button.addEventListener("click", () => {
+    selectedGamePath = button.dataset.path;
+    selectedGameTitle = button.dataset.title;
+    gameStarted = false;
 
-    function showLoading() {
-      gameHasLoaded = false;
-      loadingScreen.classList.remove("hidden");
-      loadingSpinner.style.display = "block";
-      loadingTitle.textContent = "Loading your game...";
-      loadingMessage.textContent =
-        "Get ready. Your game will appear here in a moment.";
-      loadingError.classList.remove("visible");
-      retryButton.style.display = "none";
+    playerTitle.textContent = selectedGameTitle;
+    startTitle.textContent = "Ready to play?";
+    startButton.textContent = "▶ Start Game";
+    startScreen.classList.remove("hidden");
 
-      clearTimeout(loadingTimer);
+    // Do not load the game yet.
+    gameFrame.src = "about:blank";
 
-      // Show an error if the iframe never fires its load event.
-      loadingTimer = setTimeout(() => {
-        if (!gameHasLoaded) {
-          showLoadError();
-        }
-      }, 15000);
-    }
+    playerSection.classList.add("visible");
 
-    function showLoadError() {
-      clearTimeout(loadingTimer);
-      loadingSpinner.style.display = "none";
-      loadingTitle.textContent = "Game taking too long to load";
-      loadingMessage.textContent =
-        "Check that the game file exists at the correct path on your website.";
-      loadingError.classList.add("visible");
-      retryButton.style.display = "inline-block";
-    }
-
-    function openGame(title, path) {
-      if (!path || !path.startsWith("/")) {
-        alert("This game does not have a valid website path.");
-        return;
-      }
-
-      currentGamePath = path;
-      modalTitle.textContent = title;
-      modal.classList.add("open");
-      modal.setAttribute("aria-hidden", "false");
-      document.body.style.overflow = "hidden";
-
-      showLoading();
-
-      // Reload the game inside the popup.
-      frame.src = path;
-    }
-
-    function closeGame() {
-      clearTimeout(loadingTimer);
-      modal.classList.remove("open");
-      modal.setAttribute("aria-hidden", "true");
-      document.body.style.overflow = "";
-
-      // Stop the game when the popup closes.
-      frame.src = "about:blank";
-      gameHasLoaded = false;
-    }
-
-    document.querySelectorAll("[data-game-path]").forEach(button => {
-      button.addEventListener("click", () => {
-        openGame(button.dataset.title, button.dataset.gamePath);
-      });
+    playerSection.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
     });
+  });
+});
 
-    frame.addEventListener("load", () => {
-      // Ignore the blank page used when closing the popup.
-      if (!modal.classList.contains("open") || !currentGamePath) {
-        return;
-      }
+// Only load the actual game after the player presses Start Game.
+startButton.addEventListener("click", () => {
+  if (!selectedGamePath) return;
 
-      clearTimeout(loadingTimer);
-      gameHasLoaded = true;
+  if (!gameStarted) {
+    gameStarted = true;
+    startTitle.textContent = "Loading game...";
+    startButton.textContent = "Loading...";
+    startButton.disabled = true;
 
-      loadingScreen.classList.add("hidden");
-    });
+    gameFrame.src = selectedGamePath;
 
-    closeButton.addEventListener("click", closeGame);
+    gameFrame.onload = () => {
+      // The browser fires load for about:blank too.
+      if (gameFrame.src.endsWith("about:blank")) return;
 
-    retryButton.addEventListener("click", () => {
-      if (currentGamePath) {
-        showLoading();
-        frame.src = "about:blank";
+      startScreen.classList.add("hidden");
+      startButton.disabled = false;
+      startButton.textContent = "▶ Start Game";
+    };
+  }
+});
 
-        // Start loading again after resetting the iframe.
-        setTimeout(() => {
-          if (modal.classList.contains("open")) {
-            frame.src = currentGamePath;
-          }
-        }, 100);
-      }
-    });
+// Close the player and stop the game.
+document.getElementById("closeButton").addEventListener("click", () => {
+  gameFrame.src = "about:blank";
+  selectedGamePath = "";
+  gameStarted = false;
+  playerSection.classList.remove("visible");
 
-    fullscreenButton.addEventListener("click", async () => {
-      try {
-        if (document.fullscreenElement) {
-          await document.exitFullscreen();
-        } else {
-          await stage.requestFullscreen();
-        }
-      } catch (error) {
-        // Some mobile browsers restrict fullscreen.
-        alert("Fullscreen is not supported in this browser. Try rotating your device or opening the game in a browser.");
-      }
-    });
+  document.getElementById("games").scrollIntoView?.({
+    behavior: "smooth",
+    block: "start"
+  });
+});
 
-    document.addEventListener("keydown", event => {
-      if (event.key === "Escape" && modal.classList.contains("open")) {
-        if (document.fullscreenElement) {
-          document.exitFullscreen().catch(() => {});
-        } else {
-          closeGame();
-        }
-      }
-    });
-  </script>
+// Fullscreen expands the game only when requested.
+document.getElementById("fullscreenButton").addEventListener("click", async () => {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await playerBox.requestFullscreen();
+    }
+  } catch (error) {
+    alert("Fullscreen isn't available in this browser. Try using a desktop browser.");
+  }
+});
+</script>
+
 </body>
 </html>
