@@ -1,823 +1,819 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10121a">
-  <meta name="description" content="Discover your next favorite browser game at BloomLabs.">
-  <title>BloomLabs — Play Something Great</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080d18">
+  <title>BloomLabs | Play Something New</title>
 
   <style>
-    * { box-sizing: border-box; }
-
     :root {
-      --bg: #10121a;
-      --panel: #191c27;
-      --border: #292c38;
-      --mint: #8be3b1;
-      --text: #f5f7ff;
-      --muted: #a9afc0;
+      --bg: #080d18;
+      --panel: #101a2b;
+      --panel-light: #152238;
+      --mint: #65f5c4;
+      --text: #f4f7fb;
+      --muted: #99a8bb;
+      --border: rgba(255,255,255,.09);
     }
 
-    html { scroll-behavior: smooth; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
-      margin: 0;
       background: var(--bg);
       color: var(--text);
-      font-family: Inter, system-ui, Arial, sans-serif;
+      font-family: Inter, Arial, sans-serif;
+      min-height: 100vh;
     }
 
-    body.bl-player-open { overflow: hidden; }
+    button, input {
+      font: inherit;
+    }
 
-    header {
-      min-height: 68px;
+    button {
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .navbar {
+      height: 76px;
+      padding: 0 7%;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 20px;
-      padding: 12px 5%;
+      align-items: center;
       border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: rgba(16, 18, 26, .96);
-      backdrop-filter: blur(12px);
+      background: rgba(8,13,24,.95);
     }
 
     .logo {
-      color: var(--text);
-      text-decoration: none;
-      font-size: 23px;
-      font-weight: 800;
+      font-size: 25px;
+      font-weight: 900;
       letter-spacing: -1px;
-      white-space: nowrap;
     }
 
-    .logo span { color: var(--mint); }
-
-    nav {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 22px;
+    .logo span {
+      color: var(--mint);
     }
 
-    nav a {
-      color: #b8bdcc;
-      text-decoration: none;
+    .nav-label {
+      color: var(--muted);
       font-size: 13px;
-      transition: color .2s;
     }
-
-    nav a:hover { color: var(--mint); }
 
     .hero {
-      max-width: 1500px;
-      margin: auto;
-      padding: 35px 4% 25px;
-      text-align: left;
-    }
-
-    .hero-content {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
+      padding: 76px 20px 52px;
+      text-align: center;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(58,214,164,.13), transparent 65%);
     }
 
     .eyebrow {
+      display: inline-block;
+      padding: 8px 13px;
+      border: 1px solid rgba(101,245,196,.25);
+      background: rgba(101,245,196,.07);
+      border-radius: 30px;
       color: var(--mint);
-      text-transform: uppercase;
-      font-size: 10px;
-      letter-spacing: 2px;
+      font-size: 12px;
       font-weight: 800;
+      letter-spacing: 1.5px;
+      margin-bottom: 22px;
     }
 
     h1 {
-      font-size: clamp(29px, 3.5vw, 44px);
-      letter-spacing: -1.8px;
-      line-height: 1.1;
-      margin: 9px 0;
+      font-size: clamp(40px, 7vw, 76px);
+      line-height: 1.03;
+      letter-spacing: -3px;
+      max-width: 850px;
+      margin: 0 auto 20px;
     }
 
-    h1 span { color: var(--mint); }
+    h1 span {
+      color: var(--mint);
+    }
 
-    .intro {
+    .hero p {
       color: var(--muted);
-      margin: 0;
-      line-height: 1.6;
-      font-size: 14px;
+      max-width: 550px;
+      margin: 0 auto 30px;
+      line-height: 1.7;
+      font-size: 16px;
     }
 
-    .search {
-      width: min(100%, 300px);
-      padding: 13px 15px;
-      border: 1px solid #373b4b;
-      border-radius: 10px;
+    .search-wrap {
+      max-width: 490px;
+      margin: 0 auto;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding: 16px 20px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
       background: var(--panel);
-      color: white;
-      font-size: 14px;
+      color: var(--text);
       outline: none;
     }
 
-    .search:focus { border-color: var(--mint); }
+    .search-wrap input:focus {
+      border-color: var(--mint);
+    }
 
-    .library {
-      max-width: 1600px;
-      padding: 0 4% 70px;
+    .games-section {
+      max-width: 1250px;
       margin: auto;
+      padding: 20px 24px 90px;
     }
 
-    .section-head {
+    .section-heading {
       display: flex;
-      align-items: center;
+      align-items: end;
       justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 17px;
-    }
-
-    h2 {
-      font-size: 20px;
-      letter-spacing: -.5px;
-      margin: 0;
-    }
-
-    .count {
-      color: #8d94a7;
-      font-size: 12px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 16px;
+      margin: 18px 0 27px;
     }
 
-    .game {
-      min-width: 0;
+    .section-heading h2 {
+      font-size: 29px;
+      letter-spacing: -1px;
+    }
+
+    .section-heading p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .game-count {
+      color: var(--mint);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .game-card {
       overflow: hidden;
-      border: 1px solid #2c3040;
-      border-radius: 13px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
       background: var(--panel);
       transition: transform .2s, border-color .2s;
     }
 
-    .game:hover {
-      transform: translateY(-4px);
-      border-color: var(--mint);
+    .game-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(101,245,196,.45);
     }
 
-    .art {
-      aspect-ratio: 4 / 3;
-      display: grid;
-      place-items: center;
-      font-size: clamp(38px, 4vw, 58px);
+    .game-art {
+      min-height: 165px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
       background:
-        radial-gradient(ellipse at 50% 80%, #34483f, #1a2530 65%, #171b26);
+        radial-gradient(circle at 50% 45%, rgba(101,245,196,.17), transparent 65%),
+        linear-gradient(145deg, #182b3a, #111629);
     }
 
-    .game:nth-child(2) .art {
-      background: radial-gradient(ellipse at 50% 80%, #48335b, #282038 65%, #171b26);
+    .game-art .emoji {
+      font-size: 66px;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,.3));
     }
 
-    .game:nth-child(3) .art {
-      background: radial-gradient(ellipse at 50% 80%, #59412b, #30251f 65%, #171b26);
+    .game-art .tag {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      border-radius: 7px;
+      padding: 6px 9px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      background: rgba(8,13,24,.8);
+      color: var(--mint);
     }
 
-    .game:nth-child(4) .art {
-      background: radial-gradient(ellipse at 50% 80%, #244b5b, #192b39 65%, #171b26);
+    .game-info {
+      padding: 18px;
     }
-
-    .game:nth-child(5) .art {
-      background: radial-gradient(ellipse at 50% 80%, #4b4930, #29291f 65%, #171b26);
-    }
-
-    .game-info { padding: 13px; }
 
     .game-info h3 {
-      margin: 0 0 6px;
-      font-size: 15px;
-      line-height: 1.35;
+      font-size: 17px;
+      margin-bottom: 8px;
     }
 
     .game-info p {
-      color: #9ca3b5;
       font-size: 12px;
-      line-height: 1.5;
-      margin: 0 0 12px;
-    }
-
-    .tag {
-      display: inline-block;
-      border: 1px solid #373d4c;
-      border-radius: 5px;
-      padding: 5px 7px;
-      color: #b8c1d0;
-      font-size: 10px;
-    }
-
-    .play-link {
-      display: block;
-      margin-top: 12px;
-      padding: 9px;
-      border-radius: 7px;
-      background: var(--mint);
-      color: #101a16;
-      text-align: center;
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .play-link:hover { background: #b1f2cc; }
-
-    .coming-soon {
-      display: block;
-      margin-top: 12px;
-      padding: 9px;
-      border-radius: 7px;
-      background: #252a36;
-      color: #a9afc0;
-      text-align: center;
-      font-size: 11px;
-    }
-
-    .empty {
-      padding: 36px 10px;
       color: var(--muted);
-      text-align: center;
-      display: none;
+      line-height: 1.6;
+      min-height: 39px;
+      margin-bottom: 17px;
     }
 
-    #about {
+    .play-button {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px;
+      background: var(--mint);
+      color: #07150f;
+      font-weight: 900;
+      transition: filter .2s;
+    }
+
+    .play-button:hover {
+      filter: brightness(1.08);
+    }
+
+    .play-button:disabled {
+      opacity: .65;
+      cursor: not-allowed;
+    }
+
+    .about {
       border-top: 1px solid var(--border);
-      padding-top: 30px;
+      padding: 55px 24px;
+      text-align: center;
+      background: rgba(255,255,255,.015);
     }
 
-    #about p {
-      max-width: 650px;
-      margin-top: 12px;
+    .about h2 {
+      font-size: 26px;
+      margin-bottom: 14px;
+    }
+
+    .about p {
+      max-width: 600px;
+      margin: auto;
+      line-height: 1.8;
+      color: var(--muted);
+      font-size: 14px;
     }
 
     footer {
-      border-top: 1px solid var(--border);
-      padding: 23px 5%;
-      display: flex;
-      justify-content: space-between;
-      gap: 15px;
-      color: #8d94a7;
+      padding: 25px;
+      text-align: center;
+      color: var(--muted);
       font-size: 12px;
+      border-top: 1px solid var(--border);
     }
 
-    footer a { color: #b8bdcc; text-decoration: none; }
-    footer a:hover { color: var(--mint); }
+    /* GAME POPUP */
 
-    /* BLOOMLABS GAME PLAYER */
-
-    #bl-game-modal {
+    .game-modal {
       display: none;
       position: fixed;
       inset: 0;
-      z-index: 99999;
-      background: rgba(3, 7, 18, .88);
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      z-index: 9999;
+      background: rgba(3,6,12,.96);
+      padding: 16px;
     }
 
-    #bl-game-modal.bl-open { display: flex; }
-
-    .bl-player {
-      width: min(1100px, 96vw);
-      height: min(780px, 90vh);
+    .game-modal.open {
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      border: 1px solid #334155;
-      border-radius: 16px;
-      background: #0f172a;
-      box-shadow: 0 25px 80px rgba(0, 0, 0, .6);
     }
 
-    .bl-player-bar {
-      min-height: 56px;
-      padding: 10px 16px;
+    .game-toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      background: #111c31;
-      color: white;
+      padding: 10px 0 14px;
+      flex-shrink: 0;
     }
 
-    .bl-player-title {
-      font-size: 15px;
-      font-weight: 800;
+    .game-toolbar h2 {
+      font-size: 17px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
-    .bl-player-actions {
+    .toolbar-actions {
       display: flex;
       gap: 8px;
     }
 
-    .bl-player-actions button {
-      border: 1px solid #475569;
-      background: #1e293b;
+    .toolbar-button {
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 13px;
+      background: var(--panel-light);
       color: white;
-      border-radius: 8px;
-      padding: 9px 12px;
-      cursor: pointer;
       font-size: 12px;
       font-weight: 700;
+      white-space: nowrap;
     }
 
-    .bl-player-actions button:hover {
-      background: #334155;
+    .toolbar-button:hover {
+      border-color: var(--mint);
     }
 
-    .bl-player-actions .bl-close:hover {
-      background: #7f1d1d;
+    .close-button {
+      background: #39202b;
+      border-color: #623144;
     }
 
-    #bl-game-area {
-      position: relative;
+    .game-stage {
       flex: 1;
       min-height: 0;
-      background: #020617;
+      width: 100%;
+      max-width: 1500px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #080d18;
     }
 
-    #bl-game-frame {
+    .game-stage iframe {
       display: block;
       width: 100%;
       height: 100%;
       border: 0;
-      background: #020617;
+      background: white;
     }
 
-    /* Loading screen and future ad placement */
-
-    #bl-game-loading {
+    .loading-screen {
       position: absolute;
       inset: 0;
       z-index: 2;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       gap: 14px;
-      padding: 20px;
-      background: #080f20;
-      color: white;
+      padding: 24px;
+      background: #080d18;
       text-align: center;
     }
 
-    .bl-loader {
-      width: 38px;
-      height: 38px;
-      border: 4px solid #334155;
-      border-top-color: var(--mint);
-      border-radius: 50%;
-      animation: bl-spin .8s linear infinite;
+    .loading-screen.hidden {
+      display: none;
     }
 
-    @keyframes bl-spin {
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border: 4px solid rgba(255,255,255,.12);
+      border-top-color: var(--mint);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin {
       to { transform: rotate(360deg); }
     }
 
-    .bl-ad-placeholder {
-      width: min(420px, 90%);
-      min-height: 100px;
+    .loading-screen h3 {
+      font-size: 20px;
+    }
+
+    .loading-screen p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      max-width: 400px;
+    }
+
+    .ad-placeholder {
+      margin-top: 8px;
+      width: min(100%, 500px);
+      min-height: 75px;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 7px;
-      border: 1px dashed #64748b;
-      border-radius: 10px;
-      padding: 12px;
-      color: #94a3b8;
-      background: #111827;
+      border: 1px dashed rgba(255,255,255,.2);
+      border-radius: 9px;
+      color: #76859a;
+      font-size: 11px;
+      letter-spacing: 1px;
     }
 
-    .bl-ad-label {
-      font-size: 10px;
-      letter-spacing: 2px;
-      color: #94a3b8;
+    .loading-error {
+      display: none;
+      color: #ffb5b5 !important;
     }
 
-    .bl-ad-placeholder strong {
-      font-size: 14px;
-      color: #cbd5e1;
+    .loading-error.visible {
+      display: block;
     }
 
-    .bl-loading-note {
-      font-size: 12px;
-      color: #94a3b8;
-      line-height: 1.5;
+    @media (max-width: 1000px) {
+      .games-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
-    /* Fullscreen */
-
-    #bl-game-modal:fullscreen {
-      padding: 0;
-      background: #020617;
-    }
-
-    #bl-game-modal:fullscreen .bl-player {
-      width: 100%;
-      height: 100%;
-      max-width: none;
-      border: 0;
-      border-radius: 0;
-    }
-
-    #bl-game-modal:fullscreen .bl-player-bar {
-      min-height: 48px;
-    }
-
-    @media (max-width: 1200px) {
-      .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    }
-
-    @media (max-width: 900px) {
-      .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .hero-content { align-items: flex-start; flex-direction: column; }
-      .search { width: 100%; max-width: 450px; }
-    }
-
-    @media (max-width: 600px) {
-      header { padding: 12px 4%; gap: 12px; }
-      .logo { font-size: 20px; }
-      nav { gap: 12px; }
-      nav a { font-size: 11px; }
-      .hero { padding-top: 25px; }
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-      .game-info { padding: 10px; }
-      .game-info h3 { font-size: 13px; }
-      .game-info p { font-size: 11px; }
-      footer { flex-direction: column; }
-
-      #bl-game-modal { padding: 6px; }
-
-      .bl-player {
-        width: 100%;
-        height: 92vh;
-        border-radius: 10px;
+    @media (max-width: 560px) {
+      .navbar {
+        height: 65px;
+        padding: 0 20px;
       }
 
-      .bl-player-bar { padding: 8px; }
-      .bl-player-title { font-size: 12px; }
-      .bl-player-actions { gap: 5px; }
-
-      .bl-player-actions button {
-        padding: 8px;
+      .nav-label {
         font-size: 11px;
       }
 
-      .bl-ad-placeholder {
-        min-height: 85px;
+      .hero {
+        padding-top: 58px;
       }
-    }
 
-    @media (max-width: 360px) {
-      .grid { grid-template-columns: 1fr; }
-      .bl-player-title { max-width: 90px; }
+      .games-section {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .games-grid {
+        gap: 12px;
+      }
+
+      .game-art {
+        min-height: 125px;
+      }
+
+      .game-art .emoji {
+        font-size: 48px;
+      }
+
+      .game-info {
+        padding: 12px;
+      }
+
+      .game-info h3 {
+        font-size: 15px;
+      }
+
+      .game-info p {
+        font-size: 11px;
+      }
+
+      .section-heading h2 {
+        font-size: 24px;
+      }
+
+      .game-modal {
+        padding: 8px;
+      }
+
+      .game-toolbar {
+        padding-top: 5px;
+      }
+
+      .game-toolbar h2 {
+        font-size: 14px;
+      }
+
+      .toolbar-button {
+        padding: 9px 10px;
+      }
     }
   </style>
 </head>
 
 <body>
-  <header>
-    <a class="logo" href="#" aria-label="BloomLabs home">
-      Bloom<span>Labs</span>
-    </a>
-
-    <nav aria-label="Main navigation">
-      <a href="#games">Games</a>
-      <a href="#about">About</a>
-      <a href="privacy.html">Privacy</a>
-    </nav>
+  <header class="navbar">
+    <a href="#" class="logo">Bloom<span>Labs</span></a>
+    <div class="nav-label">YOUR NEXT FAVORITE GAME STARTS HERE</div>
   </header>
 
   <main>
     <section class="hero">
-      <div class="hero-content">
-        <div>
-          <div class="eyebrow">Your next game starts here</div>
-          <h1>Find your next <span>favorite.</span></h1>
-          <p class="intro">Discover games. Jump straight into the fun.</p>
-        </div>
+      <div class="eyebrow">WELCOME TO BLOOMLABS</div>
+      <h1>Less scrolling.<br><span>More playing.</span></h1>
+      <p>
+        Discover fun browser games, build something awesome,
+        and jump straight into the action. No downloads required.
+      </p>
 
+      <div class="search-wrap">
         <input
-          id="search"
-          class="search"
           type="search"
+          id="gameSearch"
           placeholder="Search games..."
           aria-label="Search games"
         >
       </div>
     </section>
 
-    <section class="library" id="games">
-      <div class="section-head">
-        <h2>Explore Games</h2>
-        <span class="count" id="count">5 games</span>
+    <section class="games-section" id="games">
+      <div class="section-heading">
+        <div>
+          <h2>Explore Games</h2>
+          <p>Pick a game and start playing.</p>
+        </div>
+        <div class="game-count" id="gameCount">4 GAMES</div>
       </div>
 
-      <div class="grid" id="grid">
-        <article class="game" data-search="mini business tycoon simulation money">
-          <div class="art" aria-hidden="true">🏪</div>
+      <div class="games-grid" id="gamesGrid">
+
+        <!-- GAME 1: UPDATE THIS PATH IF YOUR FILE IS ELSEWHERE -->
+        <article class="game-card" data-search="tiny business tycoon simulator money idle">
+          <div class="game-art">
+            <span class="tag">Featured</span>
+            <span class="emoji">🏢</span>
+          </div>
           <div class="game-info">
-            <h3>Mini Business Tycoon</h3>
-            <p>Build a business and grow your empire.</p>
-            <span class="tag">Simulation</span>
-            <a
-              class="play-link"
-              href="games/mini-business-tycoon/index.html"
-              onclick="openGame(event, 'Tiny Business Tycoon', 'games/mini-business-tycoon/index.html')"
-            >Play Game ▶</a>
+            <h3>Tiny Business Tycoon</h3>
+            <p>Start small, grow your business, and build your empire.</p>
+            <button
+              class="play-button"
+              data-title="Tiny Business Tycoon"
+              data-game-path="/games/mini-business-tycoon/index.html"
+            >▶ Play Now</button>
           </div>
         </article>
 
-        <article class="game" data-search="merge lab puzzle strategy">
-          <div class="art" aria-hidden="true">◈</div>
+        <!-- PLACEHOLDER GAME 2 -->
+        <article class="game-card" data-search="neon racer racing cars driving">
+          <div class="game-art">
+            <span class="tag">Coming Soon</span>
+            <span class="emoji">🏎️</span>
+          </div>
           <div class="game-info">
-            <h3>Merge Lab</h3>
-            <p>Combine pieces and beat your high score.</p>
-            <span class="tag">Puzzle</span>
-            <span class="coming-soon">Coming Soon</span>
+            <h3>Neon Racer</h3>
+            <p>Race through glowing streets and chase the fastest time.</p>
+            <button class="play-button" disabled>Coming Soon</button>
           </div>
         </article>
 
-        <article class="game" data-search="neon dash arcade action reflex">
-          <div class="art" aria-hidden="true">✳</div>
+        <!-- PLACEHOLDER GAME 3 -->
+        <article class="game-card" data-search="pixel quest adventure dungeon">
+          <div class="game-art">
+            <span class="tag">Coming Soon</span>
+            <span class="emoji">⚔️</span>
+          </div>
           <div class="game-info">
-            <h3>Neon Dash</h3>
-            <p>Dodge obstacles and go further.</p>
-            <span class="tag">Arcade</span>
-            <span class="coming-soon">Coming Soon</span>
+            <h3>Pixel Quest</h3>
+            <p>Explore a pixel world packed with challenges and surprises.</p>
+            <button class="play-button" disabled>Coming Soon</button>
           </div>
         </article>
 
-        <article class="game" data-search="gravity grid physics puzzle">
-          <div class="art" aria-hidden="true">⬡</div>
+        <!-- PLACEHOLDER GAME 4 -->
+        <article class="game-card" data-search="brain break puzzle logic">
+          <div class="game-art">
+            <span class="tag">Coming Soon</span>
+            <span class="emoji">🧩</span>
+          </div>
           <div class="game-info">
-            <h3>Gravity Grid</h3>
-            <p>Solve clever gravity-based challenges.</p>
-            <span class="tag">Strategy</span>
-            <span class="coming-soon">Coming Soon</span>
+            <h3>Brain Break</h3>
+            <p>Test your logic with quick puzzles and clever challenges.</p>
+            <button class="play-button" disabled>Coming Soon</button>
           </div>
         </article>
 
-        <article class="game" data-search="pixel jump platformer adventure">
-          <div class="art" aria-hidden="true">🎮</div>
-          <div class="game-info">
-            <h3>Pixel Jump</h3>
-            <p>Leap across platforms and explore.</p>
-            <span class="tag">Platformer</span>
-            <span class="coming-soon">Coming Soon</span>
-          </div>
-        </article>
-      </div>
-
-      <div class="empty" id="empty">
-        No games match that search. Try another title.
       </div>
     </section>
 
-    <section class="library" id="about">
-      <h2>About BloomLabs</h2>
-      <p class="intro">
-        BloomLabs is a growing collection of browser games made for quick
-        breaks, new challenges, and fun. More games are on the way.
+    <section class="about">
+      <h2>Welcome to BloomLabs</h2>
+      <p>
+        We're building a growing collection of fun, accessible browser games.
+        Find a game, open it instantly, and enjoy the experience right here
+        on BloomLabs.
       </p>
     </section>
   </main>
 
   <footer>
-    <span>© <span id="year"></span> BloomLabs</span>
-    <span>Made for the love of play.</span>
-    <span><a href="privacy.html">Privacy Policy</a></span>
+    © 2026 BloomLabs. Made for players.
   </footer>
 
-  <!-- POP-UP GAME PLAYER -->
+  <!-- GAME POPUP -->
   <div
-    id="bl-game-modal"
+    class="game-modal"
+    id="gameModal"
     role="dialog"
     aria-modal="true"
     aria-label="Game player"
     aria-hidden="true"
   >
-    <div class="bl-player">
-      <div class="bl-player-bar">
-        <div class="bl-player-title" id="bl-game-title">
-          BloomLabs Game
-        </div>
+    <div class="game-toolbar">
+      <h2 id="modalGameTitle">Loading game...</h2>
 
-        <div class="bl-player-actions">
-          <button
-            type="button"
-            id="bl-fullscreen-button"
-            onclick="blToggleFullscreen()"
-            aria-label="Toggle fullscreen"
-          >⛶ Fullscreen</button>
-
-          <button
-            type="button"
-            class="bl-close"
-            onclick="blCloseGame()"
-            aria-label="Close game"
-          >✕ Close</button>
-        </div>
+      <div class="toolbar-actions">
+        <button class="toolbar-button" id="fullscreenButton">
+          ⛶ Fullscreen
+        </button>
+        <button class="toolbar-button close-button" id="closeButton">
+          ✕ Close
+        </button>
       </div>
+    </div>
 
-      <div id="bl-game-area">
-        <iframe
-          id="bl-game-frame"
-          title="BloomLabs game"
-          allow="fullscreen"
-          allowfullscreen
-        ></iframe>
+    <div class="game-stage" id="gameStage">
+      <iframe
+        id="gameFrame"
+        title="BloomLabs game"
+        allow="fullscreen; autoplay; gamepad"
+        allowfullscreen
+      ></iframe>
 
-        <!-- Loading screen and future ad placeholder -->
-        <div id="bl-game-loading" role="status" aria-live="polite">
-          <div class="bl-loader"></div>
-          <strong>Loading your game...</strong>
-          <div class="bl-loading-note">
-            Getting everything ready to play.
-          </div>
+      <div class="loading-screen" id="loadingScreen">
+        <div class="spinner" id="loadingSpinner"></div>
+        <h3 id="loadingTitle">Loading your game...</h3>
+        <p id="loadingMessage">
+          Get ready. Your game will appear here in a moment.
+        </p>
 
-          <div class="bl-ad-placeholder" id="bl-ad-placeholder">
-            <span class="bl-ad-label">ADVERTISEMENT</span>
-            <strong>Ad space reserved</strong>
-            <span class="bl-loading-note">
-              A future advertisement may appear here.
-            </span>
-          </div>
+        <!-- FUTURE AD PLACEMENT:
+             Replace this placeholder with your approved ad provider code.
+             This placeholder does NOT display real ads or earn revenue. -->
+        <div class="ad-placeholder">
+          ADVERTISEMENT SPACE
         </div>
+
+        <p class="loading-error" id="loadingError">
+          The game could not be loaded. Check the game file path and try again.
+        </p>
+
+        <button
+          class="toolbar-button"
+          id="retryButton"
+          style="display:none"
+        >Try Again</button>
       </div>
     </div>
   </div>
 
   <script>
-    document.getElementById("year").textContent =
-      new Date().getFullYear();
-
-    // Homepage game search
-    const search = document.getElementById("search");
-    const cards = [...document.querySelectorAll(".game")];
-    const count = document.getElementById("count");
-    const empty = document.getElementById("empty");
+    // SEARCH GAMES
+    const searchInput = document.getElementById("gameSearch");
+    const gameCards = Array.from(document.querySelectorAll(".game-card"));
+    const gameCount = document.getElementById("gameCount");
 
     function filterGames() {
-      const query = search.value.trim().toLowerCase();
+      const query = searchInput.value.toLowerCase().trim();
       let visible = 0;
 
-      cards.forEach(card => {
-        const match = (
-          card.dataset.search + " " + card.innerText
-        ).toLowerCase().includes(query);
+      gameCards.forEach(card => {
+        const searchableText =
+          (card.dataset.search || "") + " " + card.innerText;
 
-        card.style.display = match ? "" : "none";
-        if (match) visible++;
+        const matches = searchableText.toLowerCase().includes(query);
+
+        card.style.display = matches ? "" : "none";
+
+        if (matches) visible++;
       });
 
-      count.textContent =
-        `${visible} game${visible === 1 ? "" : "s"}`;
-
-      empty.style.display = visible ? "none" : "block";
+      gameCount.textContent = visible + (visible === 1 ? " GAME" : " GAMES");
     }
 
-    search.addEventListener("input", filterGames);
+    searchInput.addEventListener("input", filterGames);
 
-    // BloomLabs game player
-    const blModal = document.getElementById("bl-game-modal");
-    const blFrame = document.getElementById("bl-game-frame");
-    const blLoading = document.getElementById("bl-game-loading");
-    const blTitle = document.getElementById("bl-game-title");
-    const blFullscreenButton =
-      document.getElementById("bl-fullscreen-button");
+    // GAME POPUP ELEMENTS
+    const modal = document.getElementById("gameModal");
+    const stage = document.getElementById("gameStage");
+    const frame = document.getElementById("gameFrame");
+    const modalTitle = document.getElementById("modalGameTitle");
+    const loadingScreen = document.getElementById("loadingScreen");
+    const loadingTitle = document.getElementById("loadingTitle");
+    const loadingMessage = document.getElementById("loadingMessage");
+    const loadingSpinner = document.getElementById("loadingSpinner");
+    const loadingError = document.getElementById("loadingError");
+    const retryButton = document.getElementById("retryButton");
+    const closeButton = document.getElementById("closeButton");
+    const fullscreenButton = document.getElementById("fullscreenButton");
 
-    let blLoadTimer = null;
-    let blMinimumWaitDone = false;
-    let blFrameLoaded = false;
-    let blLaunchId = 0;
-    let blPreviousFocus = null;
+    let currentGamePath = "";
+    let loadingTimer = null;
+    let gameHasLoaded = false;
 
-    function openGame(event, title, gamePath) {
-      if (event) event.preventDefault();
+    function showLoading() {
+      gameHasLoaded = false;
+      loadingScreen.classList.remove("hidden");
+      loadingSpinner.style.display = "block";
+      loadingTitle.textContent = "Loading your game...";
+      loadingMessage.textContent =
+        "Get ready. Your game will appear here in a moment.";
+      loadingError.classList.remove("visible");
+      retryButton.style.display = "none";
 
-      // A new launch invalidates any previous loading timer.
-      blLaunchId++;
-      const thisLaunch = blLaunchId;
+      clearTimeout(loadingTimer);
 
-      clearTimeout(blLoadTimer);
-
-      blPreviousFocus = document.activeElement;
-      blTitle.textContent = title;
-      blFrame.title = title;
-      blFrameLoaded = false;
-      blMinimumWaitDone = false;
-
-      blLoading.style.display = "flex";
-      blModal.classList.add("bl-open");
-      blModal.setAttribute("aria-hidden", "false");
-      document.body.classList.add("bl-player-open");
-
-      // Load the game inside the embedded player.
-      blFrame.src = gamePath;
-
-      // Keep the loading screen visible briefly to avoid flashing.
-      blLoadTimer = setTimeout(() => {
-        if (thisLaunch !== blLaunchId) return;
-
-        blMinimumWaitDone = true;
-        blFinishLoading(thisLaunch);
-      }, 1200);
-
-      document.getElementById("bl-fullscreen-button").focus();
+      // Show an error if the iframe never fires its load event.
+      loadingTimer = setTimeout(() => {
+        if (!gameHasLoaded) {
+          showLoadError();
+        }
+      }, 15000);
     }
 
-    function blFrameLoaded() {
-      blFrameLoaded = true;
-      blFinishLoading(blLaunchId);
+    function showLoadError() {
+      clearTimeout(loadingTimer);
+      loadingSpinner.style.display = "none";
+      loadingTitle.textContent = "Game taking too long to load";
+      loadingMessage.textContent =
+        "Check that the game file exists at the correct path on your website.";
+      loadingError.classList.add("visible");
+      retryButton.style.display = "inline-block";
     }
 
-    // Detect when the iframe has finished loading.
-    blFrame.addEventListener("load", () => {
-      // about:blank is used during closing; ignore it.
-      if (!blModal.classList.contains("bl-open")) return;
+    function openGame(title, path) {
+      if (!path || !path.startsWith("/")) {
+        alert("This game does not have a valid website path.");
+        return;
+      }
 
-      blFrameLoaded = true;
-      blFinishLoading(blLaunchId);
+      currentGamePath = path;
+      modalTitle.textContent = title;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+
+      showLoading();
+
+      // Reload the game inside the popup.
+      frame.src = path;
+    }
+
+    function closeGame() {
+      clearTimeout(loadingTimer);
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+
+      // Stop the game when the popup closes.
+      frame.src = "about:blank";
+      gameHasLoaded = false;
+    }
+
+    document.querySelectorAll("[data-game-path]").forEach(button => {
+      button.addEventListener("click", () => {
+        openGame(button.dataset.title, button.dataset.gamePath);
+      });
     });
 
-    function blFinishLoading(launchId) {
-      if (launchId !== blLaunchId) return;
-
-      if (blFrameLoaded && blMinimumWaitDone) {
-        blLoading.style.display = "none";
-      }
-    }
-
-    function blCloseGame() {
-      blLaunchId++;
-      clearTimeout(blLoadTimer);
-
-      blModal.classList.remove("bl-open");
-      blModal.setAttribute("aria-hidden", "true");
-      document.body.classList.remove("bl-player-open");
-
-      blLoading.style.display = "flex";
-      blFrameLoaded = false;
-      blMinimumWaitDone = false;
-
-      // Stop the game and its audio when the player closes.
-      blFrame.src = "about:blank";
-
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
+    frame.addEventListener("load", () => {
+      // Ignore the blank page used when closing the popup.
+      if (!modal.classList.contains("open") || !currentGamePath) {
+        return;
       }
 
-      if (blPreviousFocus && blPreviousFocus.focus) {
-        blPreviousFocus.focus();
-      }
-    }
+      clearTimeout(loadingTimer);
+      gameHasLoaded = true;
 
-    function blToggleFullscreen() {
-      if (!document.fullscreenElement) {
-        blModal.requestFullscreen().then(() => {
-          blFullscreenButton.textContent = "⛶ Exit Fullscreen";
-        }).catch(() => {
-          alert("Fullscreen is not available in this browser.");
-        });
-      } else {
-        document.exitFullscreen().catch(() => {});
-      }
-    }
-
-    document.addEventListener("fullscreenchange", () => {
-      blFullscreenButton.textContent =
-        document.fullscreenElement
-          ? "⛶ Exit Fullscreen"
-          : "⛶ Fullscreen";
+      loadingScreen.classList.add("hidden");
     });
 
-    // Escape closes the game when not in browser fullscreen.
+    closeButton.addEventListener("click", closeGame);
+
+    retryButton.addEventListener("click", () => {
+      if (currentGamePath) {
+        showLoading();
+        frame.src = "about:blank";
+
+        // Start loading again after resetting the iframe.
+        setTimeout(() => {
+          if (modal.classList.contains("open")) {
+            frame.src = currentGamePath;
+          }
+        }, 100);
+      }
+    });
+
+    fullscreenButton.addEventListener("click", async () => {
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        } else {
+          await stage.requestFullscreen();
+        }
+      } catch (error) {
+        // Some mobile browsers restrict fullscreen.
+        alert("Fullscreen is not supported in this browser. Try rotating your device or opening the game in a browser.");
+      }
+    });
+
     document.addEventListener("keydown", event => {
-      if (
-        event.key === "Escape" &&
-        blModal.classList.contains("bl-open") &&
-        !document.fullscreenElement
-      ) {
-        blCloseGame();
+      if (event.key === "Escape" && modal.classList.contains("open")) {
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        } else {
+          closeGame();
+        }
       }
     });
   </script>
 </body>
 </html>
-
-
-
