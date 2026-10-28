@@ -42,3 +42,8 @@ footer a:hover{color:var(--mint)}
 .hidden{display:none!important}
 .player-box:fullscreen{max-width:none;max-height:none;min-height:0;aspect-ratio:auto;border:0;border-radius:0}
 @media(max-width:550px){.player-box{aspect-ratio:auto;height:58vw;min-height:240px}}
+
+/* BACK BUTTON */
+.back-btn{display:inline-block;padding:16px 32px;border-radius:12px;background:var(--mint);color:#061910;font-size:17px;font-weight:900;text-decoration:none;margin-top:10px}
+.back-btn:hover{filter:brightness(1.1)}
+@media(max-width:550px){.back-btn{display:block;text-align:center}}
