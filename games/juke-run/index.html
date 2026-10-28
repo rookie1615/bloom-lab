@@ -46,7 +46,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .bld{display:flex;gap:6px;flex-wrap:wrap}.bld button{font-family:var(--body);font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:4px;border:1px solid var(--line);background:#0a0e0c;color:var(--muted);cursor:pointer}.bld button[aria-pressed="true"]{border-color:var(--amber);color:var(--amber)}
 .err{font-size:14px;color:#ff5a4e;max-width:34ch}
 #go{position:sticky;bottom:10px;box-shadow:0 6px 18px rgba(0,0,0,.6)}
-.modes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;width:100%;max-width:470px;border:2px solid var(--line);border-radius:6px;overflow:hidden}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:0;width:100%;max-width:470px;border:2px solid var(--line);border-radius:6px;overflow:hidden}
 .modes button{font-family:var(--display);font-size:16px;padding:10px 6px;border:0;background:#141c19;color:var(--muted);cursor:pointer}
 .modes button[aria-pressed="true"]{background:var(--amber);color:#1a1205}
 .modes button:focus-visible{outline:3px solid var(--chalk);outline-offset:-3px}
@@ -101,6 +101,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
       <h1>JUKE <span>RUN</span></h1>
       <div class="modes" role="group" aria-label="Game mode">
         <button type="button" id="modeRun">Field Goal<small id="bRun"></small></button>
+        <button type="button" id="modeRush">Juke Run<small id="bRush"></small></button>
         <button type="button" id="modeCatch">Catch Mode<small id="bCatch"></small></button>
         <button type="button" id="modeDef">Defense<small id="bDef"></small></button>
       </div>
@@ -154,18 +155,19 @@ function resize(){dpr=Math.min(window.devicePixelRatio||1,2);W=stage.clientWidth
 addEventListener('resize',resize);resize();
 
 let mode='run';try{mode=localStorage.getItem('jukeMode')||'run'}catch(e){}
-const BEST_KEY=()=>mode==='catch'?'catchBest':mode==='defense'?'defBest':'kickBest';
+const BEST_KEY=()=>mode==='rush'?'jukeBest':mode==='catch'?'catchBest':mode==='defense'?'defBest':'kickBest';
 let best=0;function loadBest(){best=0;try{best=+localStorage.getItem(BEST_KEY())||0}catch(e){}$('best').textContent=best}
 loadBest();
-const BLURB={run:'You\'re the kicker. Tap to lock aim, tap again for power, before the rush gets there. Fight the wind, rain and snow, angle it from the hash, and thread the gold ring for +5. Every 5th kick is a game winner worth double. Miss 3 and you\'re cut.',
+const BLURB={rush:'Straight rushing play, no catches. Push up to run, juke defenders as they lunge, break ankles on the lungers, or JUMP to hurdle them for +3. Grab power-ups and take it to the house. One tackle ends it.',run:'You\'re the kicker. Tap to lock aim, tap again for power, before the rush gets there. Fight the wind, rain and snow, angle it from the hash, and thread the gold ring for +5. Every 5th kick is a game winner worth double. Miss 3 and you\'re cut.',
   catch:'Your QB airs it out. Get under the marker before it lands, and hit JUMP as it arrives to high-point it over defenders (no one can tackle you in the air). Catch it and the end zone shows up 50 yards away, so take it to the house. 3 incompletions and the drive is over.',
   defense:'You\'re on D. Run into the ball carrier or time a DIVE to tackle. A gold ring means he still has a cut ready, so bait it, then dive. Sack the QB before he throws, or JUMP at the red marker as the ball arrives to pick it off. Give up 3 TDs and you\'re done.'};
-function syncMode(){$('modeRun').setAttribute('aria-pressed',String(mode==='run'));$('modeCatch').setAttribute('aria-pressed',String(mode==='catch'));$('modeDef').setAttribute('aria-pressed',String(mode==='defense'));
+function syncMode(){$('modeRun').setAttribute('aria-pressed',String(mode==='run'));$('modeRush').setAttribute('aria-pressed',String(mode==='rush'));$('modeCatch').setAttribute('aria-pressed',String(mode==='catch'));$('modeDef').setAttribute('aria-pressed',String(mode==='defense'));
   $('modeBlurb').textContent=BLURB[mode];loadBest();
   const g=k=>{try{return +localStorage.getItem(k)||0}catch(e){return 0}};
-  $('bRun').textContent='Best '+g('kickBest');$('legend').hidden=mode!=='catch';$('pickLbl').textContent=mode==='run'?'Pick your kicker':mode==='catch'?'Pick your receiver':'Pick your defender';$('bCatch').textContent='Best '+g('catchBest');$('bDef').textContent='Best '+g('defBest')}
+  $('bRun').textContent='Best '+g('kickBest');$('bRush').textContent='Best '+g('jukeBest');$('legend').hidden=mode!=='catch'&&mode!=='rush';$('pickLbl').textContent=mode==='run'?'Pick your kicker':mode==='rush'?'Pick your runner':mode==='catch'?'Pick your receiver':'Pick your defender';$('bCatch').textContent='Best '+g('catchBest');$('bDef').textContent='Best '+g('defBest')}
 $('modeRun').onclick=()=>{mode='run';try{localStorage.setItem('jukeMode',mode)}catch(e){}syncMode();buildHome()};
 $('modeDef').onclick=()=>{mode='defense';try{localStorage.setItem('jukeMode',mode)}catch(e){}syncMode();buildHome()};
+$('modeRush').onclick=()=>{mode='rush';try{localStorage.setItem('jukeMode',mode)}catch(e){}syncMode();buildHome()};
 $('modeCatch').onclick=()=>{mode='catch';try{localStorage.setItem('jukeMode',mode)}catch(e){}syncMode();buildHome()};
 syncMode();
 
@@ -256,13 +258,13 @@ const SKINS=[
   {id:'boot',build:'skinny',name:'BOOT',num:'3',jersey:'#1d4f9a',trim:'#f2f5ee',helmet:'#f2f5ee',perk:'leg',modes:['run'],desc:'Skinny big leg · +12 yd range'},
   {id:'laser',build:'skinny',name:'LASER',num:'5',jersey:'#111111',trim:'#4fc3f7',helmet:'#4fc3f7',perk:'accurate',modes:['run'],desc:'Accurate · straighter kicks'},
   {id:'clutch',build:'skinny',name:'CLUTCH',num:'1',jersey:'#7a1f2b',trim:'#e9c46a',helmet:'#e9c46a',perk:'clutch',modes:['run'],desc:'Clutch · triple streak bonus'},
-  {id:'hands',build:'skinny',name:'HANDS',num:'84',jersey:'#7a1f2b',trim:'#f2c230',helmet:'#f2c230',perk:'hands',modes:['catch'],desc:'Possession WR · huge catch radius'},
-  {id:'ghost',build:'skinny',name:'GHOST',num:'13',jersey:'#eef2f0',trim:'#14838c',helmet:'#14838c',perk:'reach',modes:['catch'],desc:'Route runner · bigger catch + juke zone'},
-  {id:'blaze',build:'athletic',name:'BLAZE',num:'0',jersey:'#e8682a',trim:'#111111',helmet:'#111111',perk:'speed',modes:['catch'],desc:'Burner · 12% faster'},
-  {id:'tank',build:'thick',name:'TANK',num:'99',jersey:'#1f6b45',trim:'#e9c46a',helmet:'#e9c46a',perk:'pad',modes:['defense'],desc:'Thick nose tackle · 1 extra life'},
-  {id:'gunner',build:'thick',name:'GUNNER',num:'52',jersey:'#5b2a86',trim:'#c9ccd1',helmet:'#c9ccd1',perk:'recharge',modes:['defense'],desc:'Linebacker · dive recharges fast'},
-  {id:'hawk',build:'athletic',name:'HAWK',num:'21',jersey:'#14838c',trim:'#f2f5ee',helmet:'#f2f5ee',perk:'reach',modes:['defense'],desc:'Safety · bigger tackle range'},
-  {id:'custom',build:'athletic',name:'YOU',num:'22',jersey:'#d6453d',trim:'#ffb627',helmet:'#ffb627',perk:'none',modes:['run','catch','defense'],desc:'Your name, number, colors'}
+  {id:'hands',build:'skinny',name:'HANDS',num:'84',jersey:'#7a1f2b',trim:'#f2c230',helmet:'#f2c230',perk:'hands',modes:['catch','rush'],desc:'Possession WR · huge catch radius'},
+  {id:'ghost',build:'skinny',name:'GHOST',num:'13',jersey:'#eef2f0',trim:'#14838c',helmet:'#14838c',perk:'reach',modes:['catch','rush'],desc:'Route runner · bigger catch + juke zone'},
+  {id:'blaze',build:'athletic',name:'BLAZE',num:'0',jersey:'#e8682a',trim:'#111111',helmet:'#111111',perk:'speed',modes:['catch','rush'],desc:'Burner · 12% faster'},
+  {id:'tank',build:'thick',name:'TANK',num:'99',jersey:'#1f6b45',trim:'#e9c46a',helmet:'#e9c46a',perk:'pad',modes:['defense','rush'],desc:'Thick nose tackle · 1 extra life'},
+  {id:'gunner',build:'thick',name:'GUNNER',num:'52',jersey:'#5b2a86',trim:'#c9ccd1',helmet:'#c9ccd1',perk:'recharge',modes:['defense','rush'],desc:'Linebacker · dive recharges fast'},
+  {id:'hawk',build:'athletic',name:'HAWK',num:'21',jersey:'#14838c',trim:'#f2f5ee',helmet:'#f2f5ee',perk:'reach',modes:['defense','rush'],desc:'Safety · bigger tackle range'},
+  {id:'custom',build:'athletic',name:'YOU',num:'22',jersey:'#d6453d',trim:'#ffb627',helmet:'#ffb627',perk:'none',modes:['run','rush','catch','defense'],desc:'Your name, number, colors'}
 ];
 const JERSEYS=['#d6453d','#e8682a','#f2c230','#1f6b45','#14838c','#1d4f9a','#5b2a86','#111111','#eef2f0','#7a1f2b'];
 const TRIMS=['#ffb627','#f2f5ee','#111111','#c9ccd1','#e9c46a','#14838c','#d6453d','#1d4f9a'];
@@ -405,7 +407,7 @@ function step(dt){
   st.x=Math.max(pr,Math.min(W-pr,st.x));st.y=Math.max(H*.6,Math.min(H*.92,st.y));
   const mv=Math.hypot(st.vx,st.vy-maxSp*.6*st.runAmt);
   if(mv>8)st.ang=Math.atan2(st.vy-maxSp*.6*st.runAmt,st.vx);
-  st.jukeT=Math.max(0,st.jukeT-dt);if(st.mode==='catch')tickJump(dt);
+  st.jukeT=Math.max(0,st.jukeT-dt);if(st.mode==='catch'||st.mode==='rush')tickJump(dt);
   if(st.cd>0)st.cd=Math.max(0,st.cd-dt);
   st.comboT-=dt;if(st.comboT<=0)st.combo=0;if(st.qbT>0)st.qbT-=dt;
   st.boost=Math.max(0,st.boost-dt);st.x2=Math.max(0,st.x2-dt);st.shake=Math.max(0,st.shake-dt*3);
@@ -464,6 +466,7 @@ function step(dt){
       pop(d.x,d.y,(big?'ANKLES BROKE +':'JUKE +')+pts+(st.combo>1?`  x${st.combo}`:''),'#ffb627');
       continue;
     }
+    if(st.mode==='rush'&&st.jumpT>0&&!d.hurdled&&nd<d.r*.9+pr*.85){d.hurdled=true;const pts=3*(st.x2>0?2:1);st.score+=pts;st.hurdles=(st.hurdles||0)+1;pop(d.x,d.y-d.r,'HURDLE +'+pts,'#4fc3f7');burstParts(d.x,d.y,8,['#4fc3f7','#f2f5ee'])}
     if(d.state!=='down'&&st.jumpT<=0&&nd<d.r*.9+pr*.85){
       if(st.pad){st.pad=false;d.dead=true;st.shake=.6;sfx.pad();burstParts(d.x,d.y,14,['#c9d4cc','#f2f5ee']);pop(d.x,d.y,'STIFF ARM','#c9d4cc');
         st.defs.forEach(o=>{if(!o.dead&&Math.hypot(o.x-st.x,o.y-st.y)<pr*4){o.state='down';o.t=.8}});continue}
@@ -829,7 +832,7 @@ function drawIntro(){const u=st.intro,hut=u<.45,txt=hut?'HUT!':'READY',a=Math.mi
   if(!hut){ctx.font='700 17px "Barlow Condensed", sans-serif';ctx.fillStyle='#f2f5ee';ctx.fillText(TIP[st.mode],W/2,H*.4+46)}
   ctx.restore();
   if(hut&&!st.hutSaid){st.hutSaid=true;tone(220,.12,'square',.05);noise(.06,.1)}}
-const TIP={run:'Tap to aim · tap again for power',catch:'Run under the marker · JUMP as it lands',defense:'Bait the cut, then DIVE · JUMP to pick it'};
+const TIP={rush:'Push up to run · JUKE or JUMP over them',run:'Tap to aim · tap again for power',catch:'Run under the marker · JUMP as it lands',defense:'Bait the cut, then DIVE · JUMP to pick it'};
 function setPause(v){if(!running)return;paused=v;$('pauseScr').hidden=!v;$('pauseBtn').textContent=v?'▶':'II';
   if(v){joyEnd();for(const k in keys)keys[k]=false}}
 $('pauseBtn').addEventListener('click',()=>setPause(!paused));
