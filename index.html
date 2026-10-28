@@ -570,17 +570,8 @@ searchInput.addEventListener("input", () => {
 
 document.querySelectorAll(".open-game").forEach(button => {
   button.addEventListener("click", () => {
-    selectedGamePath = button.dataset.path;
-    selectedGameTitle = button.dataset.title;
-    gameStarted = false;
-    playerTitle.textContent = selectedGameTitle;
-    startTitle.textContent = "Ready to play?";
-    startButton.textContent = "▶ Start Game";
-    startButton.disabled = false;
-    startScreen.classList.remove("hidden");
-    gameFrame.src = "about:blank";
-    playerSection.classList.add("visible");
-    playerSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    const slug = button.dataset.path.split("/")[2];
+    window.location.href = "/play/" + slug + ".html";
   });
 });
 
