@@ -189,8 +189,10 @@ h1 span { color: var(--mint); }
 .player-box {
   position: relative;
   width: 100%;
-  max-width: 950px;
-  height: min(58vw, 540px);
+  max-width: 1200px;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  max-height: 85vh;
   min-height: 300px;
   margin: 0 auto;
   overflow: hidden;
@@ -244,7 +246,8 @@ h1 span { color: var(--mint); }
   letter-spacing: 1px;
 }
 .player-box:fullscreen {
-  width: 100%; height: 100%; max-width: none; min-height: 0;
+  width: 100%; height: 100%; max-width: none; max-height: none; min-height: 0;
+  aspect-ratio: auto;
   border: 0; border-radius: 0;
 }
 .player-box:fullscreen iframe { width: 100%; height: 100%; }
@@ -278,7 +281,7 @@ footer {
   .game-info { padding: 11px; }
   .game-info h3 { font-size: 14px; }
   .game-info p { font-size: 11px; }
-  .player-box { height: 58vw; min-height: 240px; }
+  .player-box { height: 58vw; min-height: 240px; aspect-ratio: auto; }
   .player-heading h2 { font-size: 16px; }
   .control-button { padding: 9px; font-size: 11px; }
   .start-screen h3 { font-size: 21px; }
@@ -337,42 +340,29 @@ footer {
         </div>
       </article>
 
-      
-<article class="game-card" data-search="fish it fishing fish rod bait retro">
-  <div class="game-art">
-    <span class="tag">New Game</span>
-    <span class="emoji">🎣</span>
-  </div>
+      <article class="game-card" data-search="fish it fishing fish rod bait retro">
+        <div class="game-art">
+          <span class="tag">New Game</span>
+          <span class="emoji">🎣</span>
+        </div>
+        <div class="game-info">
+          <h3>Fish It</h3>
+          <p>Grab your rod, catch rare fish, and build your collection.</p>
+          <button class="play-button open-game" data-title="Fish It" data-path="/games/fish-it/index.html">▶ Play Game</button>
+        </div>
+      </article>
 
-  <div class="game-info">
-    <h3>Fish It</h3>
-    <p>Grab your rod, catch rare fish, and build your collection.</p>
-
-    <button
-      class="play-button open-game"
-      data-title="Fish It"
-      data-path="/games/fish-it/index.html"
-    >▶ Play Game</button>
-  </div>
-</article>
-
-
-      
-<article class="game-card" data-search="long shot basketball shooting sports">
-  <div class="game-art blue">
-    <span class="tag">New Game</span>
-    <span class="emoji">🪃</span>
-  </div>
-  <div class="game-info">
-    <h3>Long Shot</h3>
-    <p>Test your aim and see how far you can shoot.</p>
-    <button
-      class="play-button open-game"
-      data-title="Long Shot"
-      data-path="/games/long-shot/index.html"
-    >▶ Play Game</button>
-  </div>
-</article>
+      <article class="game-card" data-search="long shot basketball shooting sports">
+        <div class="game-art blue">
+          <span class="tag">New Game</span>
+          <span class="emoji">🪃</span>
+        </div>
+        <div class="game-info">
+          <h3>Long Shot</h3>
+          <p>Test your aim and see how far you can shoot.</p>
+          <button class="play-button open-game" data-title="Long Shot" data-path="/games/long-shot/index.html">▶ Play Game</button>
+        </div>
+      </article>
 
       <article class="game-card coming-soon" data-search="coming soon future game">
         <div class="game-art purple">
@@ -506,6 +496,8 @@ footer {
         </div>
       </article>
 
+    </div>
+  </section>
 
   <section id="playerSection">
     <div class="container">
