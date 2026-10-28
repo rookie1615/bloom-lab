@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact | BloomLabs</title>
+<meta name="description" content="Contact BloomLabs with feedback, bug reports, or game ideas.">
+<link rel="stylesheet" href="/pages.css">
+</head>
+<body>
+<header class="navbar">
+  <a href="/" class="logo">Bloom<span>Labs</span></a>
+  <nav class="nav-links">
+    <a href="/">Games</a>
+    <a href="/about.html">About</a>
+    <a href="/privacy.html">Privacy</a>
+    <a href="/contact.html" class="active">Contact</a>
+  </nav>
+</header>
+
+<main class="page">
+  <h1>Contact <span>Us</span></h1>
+  <p>Found a bug, have a game idea, or want to work with us? We’d love to hear from you.</p>
+
+  <div class="card">
+    <h2 style="margin-top:0">Send a message</h2>
+    <form id="contactForm">
+      <input type="hidden" name="access_key" value="a2021e6c-09cc-4a88-9d90-312cfdab7397">
+      <input type="hidden" name="subject" value="New message from BloomLabs">
+      <input type="hidden" name="from_name" value="BloomLabs Contact Form">
+      <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+
+      <label for="name">Your name</label>
+      <input id="name" name="name" type="text" required>
+
+      <label for="email">Your email (so we can reply)</label>
+      <input id="email" name="email" type="email" required>
+
+      <label for="topic">Topic</label>
+      <input id="topic" name="topic" type="text" placeholder="Bug report, game idea, question..." required>
+
+      <label for="message">Message</label>
+      <textarea id="message" name="message" required></textarea>
+
+      <button class="btn" type="submit">Send Message</button>
+    </form>
+    <p id="formStatus" role="status" style="font-size:14px;margin-bottom:0"></p>
+  </div>
+
+  <p style="font-size:13px">We read every message, but can’t always reply right away. Please don’t include passwords or other sensitive information.</p>
+</main>
+
+<footer>
+  <a href="/about.html">About</a><a href="/privacy.html">Privacy Policy</a><a href="/contact.html">Contact</a>
+  <div style="margin-top:10px">© 2026 BloomLabs. Made for players.</div>
+</footer>
+
+<script>
+var form = document.getElementById("contactForm");
+var statusEl = document.getElementById("formStatus");
+var sendBtn = form.querySelector("button");
+
+form.addEventListener("submit", async function (e) {
+  e.preventDefault();
+  sendBtn.disabled = true;
+  sendBtn.textContent = "Sending...";
+  statusEl.textContent = "";
+  try {
+    var res = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: { "Accept": "application/json" },
+      body: new FormData(form)
+    });
+    var data = await res.json();
+    if (data.success) {
+      form.reset();
+      statusEl.textContent = "Thanks! Your message was sent.";
+    } else {
+      statusEl.textContent = "Something went wrong. Please try again later.";
+    }
+  } catch (err) {
+    statusEl.textContent = "Something went wrong. Please try again later.";
+  }
+  sendBtn.disabled = false;
+  sendBtn.textContent = "Send Message";
+});
+</script>
+</body>
+</html>
