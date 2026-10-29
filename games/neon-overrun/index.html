@@ -253,12 +253,41 @@ const $=id=>document.getElementById(id);
 
 /* ================= save ================= */
 const SAVE_KEY='neon-overrun-v1';
-let save={mega:{},skin:'default',skins:['default'],diff:1,cleared:{},world:0,worldMax:0,starter:'bolt',gear:{},bag:[],autosell:{},enchants:{},embers:0,shop:{},best:{time:0,kills:0,level:0},muted:false,runs:0,wins:0};
-try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(s){save=Object.assign(save,s);save.shop=save.shop||{};save.gear=save.gear||{};save.mega=save.mega||{};save.skins=save.skins||['default'];if(!save.skin)save.skin='default';save.cleared=save.cleared||{};if(save.diff===undefined)save.diff=1;save.bag=save.bag||[];save.autosell=save.autosell||{};save.enchants=save.enchants||{};if(!save.starter)save.starter='bolt';save.best=Object.assign({time:0,kills:0,level:0},save.best||{});}}catch(e){}
+let save={codes:{},mega:{},skin:'default',skins:['default'],diff:1,cleared:{},world:0,worldMax:0,starter:'bolt',gear:{},bag:[],autosell:{},enchants:{},embers:0,shop:{},best:{time:0,kills:0,level:0},muted:false,runs:0,wins:0};
+try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(s){save=Object.assign(save,s);save.shop=save.shop||{};save.gear=save.gear||{};save.codes=save.codes||{};save.mega=save.mega||{};save.skins=save.skins||['default'];if(!save.skin)save.skin='default';save.cleared=save.cleared||{};if(save.diff===undefined)save.diff=1;save.bag=save.bag||[];save.autosell=save.autosell||{};save.enchants=save.enchants||{};if(!save.starter)save.starter='bolt';save.best=Object.assign({time:0,kills:0,level:0},save.best||{});}}catch(e){}
 const ADMIN_CREDITS=999999;
-const wMax=()=>save.admin?WORLDS.length-1:(save.worldMax|0);
-const fmtCred=()=>save.admin?'∞':save.embers;
-function persist(){if(save.admin)save.embers=ADMIN_CREDITS;try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){}}
+const CODES=[
+  {code:'53487',id:'full',n:'Full Admin',d:'Infinite credits, every world and every Ultra.'},
+  {code:'11223',id:'inf',n:'Infinite Credits',d:'Credits never run out.'},
+  {code:'44556',id:'worlds',n:'All Worlds',d:'Every world is unlocked.'},
+  {code:'77889',id:'skins',n:'All Skins',d:'Wear any skin without rolling for it.'},
+  {code:'90210',id:'god',n:'God Mode',d:'You take no damage.'},
+  {code:'31415',id:'maxup',n:'Maxed Upgrades',d:'Every shop and Mega upgrade at max rank.'},
+  {code:'27182',id:'ultras',n:'All Ultras',d:'Every Ultra upgrade is active.'},
+  {code:'66600',id:'luck',n:'Mythic Luck',d:'Every crate rolls Mythic.'},
+  {code:'12321',id:'onehit',n:'One-Hit Kills',d:'Every enemy dies in one hit, bosses too.'},
+];
+const C=id=>id==='full'?!!save.admin:!!(save.codes&&save.codes[id]);
+const INF=()=>C('full')||C('inf');
+const wMax=()=>C('full')||C('worlds')?WORLDS.length-1:(save.worldMax|0);
+const fmtCred=()=>INF()?'∞':save.embers;
+const ownsSkin=id=>C('skins')||save.skins.includes(id);
+function codeOn(c){
+  if(C(c.id))return false;
+  if((c.id==='full'||c.id==='inf')&&!INF())save.realEmbers=save.embers;
+  if(c.id==='full')save.admin=true;
+  else{save.codes[c.id]=true;
+    if(c.id==='maxup'){save.codeBak={shop:Object.assign({},save.shop),mega:Object.assign({},save.mega)};for(const it of SHOP)save.shop[it.id]=it.max;for(const m of MEGAS)save.mega[m.id]=m.cost.length;}}
+  persist();return true;}
+function codeOff(id){
+  const wasInf=INF();
+  if(id==='full')save.admin=false;else delete save.codes[id];
+  if(id==='maxup'&&save.codeBak){save.shop=save.codeBak.shop;save.mega=save.codeBak.mega;delete save.codeBak;}
+  if(wasInf&&!INF())save.embers=save.realEmbers|0;
+  if((save.world|0)>wMax())save.world=wMax();
+  if(!ownsSkin(save.skin))save.skin='default';
+  persist();}
+function persist(){if(INF())save.embers=ADMIN_CREDITS;try{localStorage.setItem(SAVE_KEY,JSON.stringify(save));}catch(e){}}
 
 /* ================= icons ================= */
 const S=(inner,fill)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
@@ -314,7 +343,7 @@ const ENCH={
   haste:{n:'Rapid Fire',d:t=>`This weapon reloads ${10*t}% faster.`},
 };
 const GEAR_COST=40,ENCH_COST=55;
-function rollRarity(){let r=Math.random()*100;for(let i=0;i<RAR.length;i++){r-=RAR[i].w;if(r<=0)return i;}return 0;}
+function rollRarity(){if(C('luck'))return RAR.length-1;let r=Math.random()*100;for(let i=0;i<RAR.length;i++){r-=RAR[i].w;if(r<=0)return i;}return 0;}
 function rollGear(forceSlot){
   const slot=forceSlot||pick(GSLOTS),gs=GEAR_SLOTS[slot],r=rollRarity(),R=RAR[r];const n=[1,2,3,3,4][r];
   const pool=[];for(const k in GSTATS)pool.push([k,gs.aff.includes(k)?3:1]);
@@ -389,7 +418,7 @@ const ULTRAS=[
   {w:5,id:'honor',n:'Honor Roll',d:'Level-ups offer 4 choices instead of 3.'},
   {w:6,id:'midas',n:'Midas Touch',d:'Any enemy has a small chance to drop a supply crate.'},
 ];
-const hasU=id=>{const u=ULTRAS.find(x=>x.id===id);return !!u&&(save.admin||(save.cleared&&save.cleared[u.w]!==undefined));};
+const hasU=id=>{const u=ULTRAS.find(x=>x.id===id);return !!u&&(C('full')||C('ultras')||(save.cleared&&save.cleared[u.w]!==undefined));};
 const MEGAS=[
   {id:'mdmg',n:'Mega Damage',d:'+25% damage per rank.',cost:[300,600,1000]},
   {id:'mhp',n:'Mega Hull',d:'+60 max health per rank.',cost:[250,500,850]},
@@ -502,7 +531,7 @@ function banner(title,sub){const b=$('banner');b.innerHTML=title+(sub?`<small>${
 function hurt(e,d,kx,ky,src){
   if(e.dead)return;const en=(src&&run.ench&&src===run.starter)?run.ench:null;
   if(en&&en.id==='power')d*=1+0.15*en.tier;
-  const crit=Math.random()<0.06+(P.crit||0)+(en&&en.id==='crit'?0.08*en.tier:0);if(crit)d*=2;d=Math.max(1,Math.round(d));
+  const crit=Math.random()<0.06+(P.crit||0)+(en&&en.id==='crit'?0.08*en.tier:0);if(crit)d*=2;d=Math.max(1,Math.round(d));if(C('onehit'))d=Math.max(d,Math.ceil(e.hp));
   e.hp-=d;e.flash=0.09;run.dmg+=d;if(hasU('frost')&&!e.boss)e.slow=Math.max(e.slow,1);
   if(!e.boss){const k=e.elite?0.25:1;e.kx+=kx*k;e.ky+=ky*k;}
   dmgNum(e.x,e.y-e.r,d,crit);sfx('hit');
@@ -534,7 +563,7 @@ function dropXP(x,y,v){
 }
 function heal(n){const before=P.hp;P.hp=Math.min(P.maxHp,P.hp+n);const h=Math.round(P.hp-before);if(h>0){dmgNum(P.x,P.y-24,'+'+h,false,'#7dffa8');}}
 function damagePlayer(d){
-  if(P.iframe>0||state!=='play')return;
+  if(P.iframe>0||state!=='play'||C('god'))return;
   if(P.legend.aegis&&P.shieldT<=0){P.shieldT=5;P.iframe=0.6;fx.push({k:'ring',x:P.x,y:P.y,r:40,t:0,dur:0.35,col:'#5ee7ff',follow:true});sfx('shield');return;}
   d=Math.max(1,Math.round(d*DF().dmg*(1+0.25*wDiff())*(1+run.t/420+(run.t>420?(run.t-420)/90:0))-P.armor));
   d=Math.min(d,Math.ceil(P.maxHp*0.55));P.hp-=d;P.iframe=0.45;P.hurtT=0.25;shake=Math.max(shake,7);sfx('hurt');
@@ -945,7 +974,7 @@ const SKINS=[
   {id:'void',n:'Voidwalker',r:4,body:'#0d0a14',head:'#151022',visor:'#b06bff',trim:'#ff3b6b',leg:'#07050c',acc:'void'},
 ];
 const SKIN_COST=50;
-const curSkin=()=>SKINS.find(k=>k.id===save.skin)||SKINS[0];
+const curSkin=()=>(ownsSkin(save.skin)&&SKINS.find(k=>k.id===save.skin))||SKINS[0];
 function drawAvatar(sk,sd,bob,st,hurt,t){
   const A=sk.acc;
   if(A==='ghost')ctx.globalAlpha*=0.75;
@@ -1086,7 +1115,7 @@ function updateHUD(){
   setText('clock',fmtTime(run.t));setText('kills',String(run.kills));setText('embers',String(Math.floor(run.gold)));setText('lvl','LV '+P.lvl);
   const xpw=Math.min(100,P.xp/P.xpNext*100).toFixed(1)+'%';if(hudCache.xp!==xpw){hudCache.xp=xpw;$('xpfill').style.width=xpw;}
   const sb=$('speedBtn');const avail=run.gold-run.goldBanked;
-  const sk=run.t<300?'hide':run.fastOwned?(run.speed===2?'on':'off'):(save.admin||avail>=45?'buy':'poor');
+  const sk=run.t<300?'hide':run.fastOwned?(run.speed===2?'on':'off'):(INF()||avail>=45?'buy':'poor');
   if(hudCache.speed!==sk){hudCache.speed=sk;sb.hidden=sk==='hide';sb.disabled=sk==='poor';sb.classList.toggle('on',sk==='on');
     sb.textContent=sk==='on'?'Speed 2×':sk==='off'?'Speed 1×':'2× speed · 45 cr';}
   if(run.boss){const bw=Math.max(0,run.boss.hp/run.boss.maxHp*100).toFixed(1)+'%';if(hudCache.boss!==bw){hudCache.boss=bw;$('bossfill').style.width=bw;}}
@@ -1208,7 +1237,7 @@ function showArmory(){ovNext='armory';
     <div class="sec"><h3>Starting weapon</h3><div class="wgrid">${WIDS.map(id=>{const d=WEAPONS[id],en=save.enchants[id];return `<button class="wpick${id===st?' sel':''}" data-act="starter" data-id="${id}" style="--c:${d.color}"><span class="ic">${ICON[id]}</span><b>${d.name}</b><small${en?` style="color:${RAR[en.tier-1].c}"`:''}>${en?ENCH[en.id].n:'No enchant'}</small></button>`;}).join('')}</div>
       ${enchLine(save.enchants[st])}</div>
     <div class="sec"><h3>Equipped gear</h3>${GSLOTS.map(sl=>gearCard(save.gear[sl],sl)).join('')}</div>
-    <div class="sec"><h3>Skins · ${save.skins.length}/${SKINS.length}</h3><div class="skins">${SKINS.map(k=>{const own=save.skins.includes(k.id),th=skinThumb(k);return own?`<button class="skin${save.skin===k.id?' sel':''}" style="--r:${RAR[k.r].c}" data-act="skinequip" data-id="${k.id}" aria-label="Wear ${k.n}">${th?`<img src="${th}" alt="">`:''}<span>${k.n}</span></button>`:`<div class="skin locked" style="--r:${RAR[k.r].c}">${th?`<img src="${th}" alt="">`:''}<span>???</span></div>`;}).join('')}</div></div>
+    <div class="sec"><h3>Skins · ${C('skins')?SKINS.length:save.skins.length}/${SKINS.length}</h3><div class="skins">${SKINS.map(k=>{const own=ownsSkin(k.id),th=skinThumb(k);return own?`<button class="skin${save.skin===k.id?' sel':''}" style="--r:${RAR[k.r].c}" data-act="skinequip" data-id="${k.id}" aria-label="Wear ${k.n}">${th?`<img src="${th}" alt="">`:''}<span>${k.n}</span></button>`:`<div class="skin locked" style="--r:${RAR[k.r].c}">${th?`<img src="${th}" alt="">`:''}<span>???</span></div>`;}).join('')}</div></div>
     <div class="sec"><h3>Crates</h3><div class="crates">
       <button class="btn crate wide${save.embers>=SKIN_COST?' primary':''}" data-act="rollskin"${save.embers>=SKIN_COST?'':' disabled'}><span class="cic">${ICON.star}</span>Skin crate<small>${SKIN_COST} credits · ${SKINS.length} skins</small></button>
       ${GSLOTS.map(sl=>`<button class="btn crate${save.embers>=GEAR_COST?' primary':''}" data-act="rollgear" data-slot="${sl}"${save.embers>=GEAR_COST?'':' disabled'}><span class="cic">${ICON[GEAR_SLOTS[sl].icon]}</span>${GEAR_SLOTS[sl].n} crate<small>${GEAR_COST} credits</small></button>`).join('')}
@@ -1295,7 +1324,7 @@ function nextAuto(){
   const cost=a.kind==='gear'?GEAR_COST:ENCH_COST;
   if(save.embers<cost){stopAuto('Out of credits');return;}
   if(a.kind==='gear'&&save.bag.length>=40){stopAuto('Bag is full');return;}
-  save.embers-=cost;a.spent+=save.admin?0:cost;persist();a.rolls++;
+  save.embers-=cost;a.spent+=INF()?0:cost;persist();a.rolls++;
   pendingRoll=a.kind==='gear'?{kind:'gear',it:rollGear(a.slot)}:{kind:'ench',e:rollEnch(),w:a.w};
   spinCrate();
 }
@@ -1320,7 +1349,7 @@ function stopAuto(reason){ovNext='crate';
   clearSpin();autoRun=null;
   const title=a.kind==='gear'?`${GEAR_SLOTS[a.slot].n} crate`:'Enchant crate';
   openOv(`<div class="panel"><div><div class="eyebrow">${reason}</div><h2>Auto roll done</h2></div>
-    <div class="stats"><div class="stat"><span>Rolls</span><b>${a.rolls}</b></div><div class="stat em"><span>Sold for</span><b>+${a.sold}</b></div><div class="stat"><span>Kept</span><b>${a.kept.length}</b></div><div class="stat"><span>Spent</span><b>${save.admin?'0':a.spent}</b></div></div>
+    <div class="stats"><div class="stat"><span>Rolls</span><b>${a.rolls}</b></div><div class="stat em"><span>Sold for</span><b>+${a.sold}</b></div><div class="stat"><span>Kept</span><b>${a.kept.length}</b></div><div class="stat"><span>Spent</span><b>${INF()?'0':a.spent}</b></div></div>
     ${a.kept.length?`<div class="sec"><h3>${a.kind==='gear'?'Sent to your bag':'Applied to '+WEAPONS[a.w].name}</h3>${a.kept.map(r=>r.kind==='gear'?`<div class="bagrow" style="--r:${RAR[r.it.r].c};grid-template-columns:minmax(0,1fr)"><div style="min-width:0"><b>${r.it.name} · ${RAR[r.it.r].n}</b><small>${statLine(r.it)}</small></div></div>`:enchLine(r.e)).join('')}</div>`:'<p class="hint">Nothing kept. Everything matched your auto-sell rules.</p>'}
     <div class="row"><button class="btn primary" data-act="${a.kind==='gear'?'again':'againench'}"${a.kind==='gear'?` data-slot="${a.slot}"`:''} data-focus>Auto roll again</button><button class="btn topback" data-act="armory">‹ Back</button></div></div>`);
 }
@@ -1341,9 +1370,9 @@ function showShop(){ovNext='shop';
       <button class="btn small${!maxed&&save.embers>=c?' primary':''}" data-act="buymega" data-id="${m.id}"${maxed||save.embers<c?' disabled':''}>${maxed?'Owned':c+' credits'}</button></div>`;}).join('')}</div></div>
     <div class="sec"><h3>Ultra upgrades · ${ULTRAS.filter(u=>hasU(u.id)).length}/${ULTRAS.length}</h3><p class="hint">Beat a world on any difficulty to unlock its Ultra. Unlocked Ultras are always active.</p>
       <div class="shop">${ULTRAS.map(u=>{const on=hasU(u.id),w=WORLDS[u.w];return `<div class="item ultra${on?' on':''}" style="--wa:${w.accent}"><h3>${on?u.n:'Locked'}</h3><p>${on?u.d:`Beat ${w.name} to unlock.`}</p><span class="ubadge">${on?'Active':'World '+(u.w+1)}</span></div>`;}).join('')}</div></div>
-    <div class="sec"><h3>Admin</h3>
-      ${save.admin?`<div class="ench" style="--r:#ffd166"><b>Admin mode is on.</b> Infinite credits and every world unlocked.</div><button class="btn" data-act="adminoff">Turn off admin mode</button>`
-      :`<form class="codeform" id="codeform"><input id="admincode" type="text" inputmode="numeric" autocomplete="off" placeholder="Enter code" aria-label="Admin code" maxlength="12"><button class="btn small primary" type="submit">Enter</button></form><p class="hint" id="codemsg" role="status"></p>`}</div>
+    <div class="sec"><h3>Admin codes</h3>
+      <form class="codeform" id="codeform"><input id="admincode" type="text" inputmode="numeric" autocomplete="off" placeholder="Enter code" aria-label="Admin code" maxlength="12"><button class="btn small primary" type="submit">Enter</button></form><p class="hint" id="codemsg" role="status"></p>
+      ${CODES.filter(c=>C(c.id)).map(c=>`<div class="item mega" style="border-left-color:#ffd166"><h3 style="color:#ffd166">${c.n}</h3><p>${c.d}</p><button class="btn small" data-act="codeoff" data-id="${c.id}">Turn off</button></div>`).join('')}</div>
     <button class="btn topback" data-act="menu">‹ Back</button></div>`);
 }
 function endRun(win){
@@ -1351,7 +1380,7 @@ function endRun(win){
   const earned=Math.round((run.gold-run.goldBanked)*(1+0.2*(save.shop.greed||0))*(1+0.25*curWorld));run.goldBanked=run.gold;
   save.embers+=earned;run.earned+=earned;
   if(run.t>save.best.time)save.best.time=Math.floor(run.t);if(run.kills>save.best.kills)save.best.kills=run.kills;if(P.lvl>save.best.level)save.best.level=P.lvl;
-  let unlocked=null,newU=null;if(win){const ck=String(curWorld);if(save.cleared[ck]===undefined&&!save.admin)newU=ULTRAS.find(u=>u.w===curWorld)||null;save.cleared[ck]=Math.max(save.cleared[ck]??-1,run.diff);save.wins=(save.wins||0)+1;if(curWorld===save.worldMax&&curWorld<WORLDS.length-1){save.worldMax++;save.world=save.worldMax;unlocked=WORLDS[save.worldMax];}}else save.runs++;
+  let unlocked=null,newU=null;if(win){const ck=String(curWorld);if(save.cleared[ck]===undefined&&!C('full')&&!C('ultras'))newU=ULTRAS.find(u=>u.w===curWorld)||null;save.cleared[ck]=Math.max(save.cleared[ck]??-1,run.diff);save.wins=(save.wins||0)+1;if(curWorld===save.worldMax&&curWorld<WORLDS.length-1){save.worldMax++;save.world=save.worldMax;unlocked=WORLDS[save.worldMax];}}else save.runs++;
   persist();showHUD(false);
   const title=win?'City reclaimed':'System failure';
   const sub=win?`You cleared ${WD().name} on ${DF().n}.`:(run.t>=600?'Endless mode finally got you.':`You lasted ${fmtTime(run.t)}.`);
@@ -1384,7 +1413,7 @@ ov.addEventListener('click',ev=>{
     case 'rollskin':openSkinCrate();break;
     case 'skinequip':save.skin=b.dataset.id;persist();sfx('level');showArmory();break;
     case 'diff':save.diff=+b.dataset.k;persist();showMenu();break;
-    case 'adminoff':save.admin=false;save.embers=save.realEmbers|0;if((save.world|0)>(save.worldMax|0))save.world=save.worldMax|0;persist();showShop();break;
+    case 'codeoff':codeOff(b.dataset.id);sfx('click');showShop();break;
     case 'wprev':save.world=Math.max(0,(save.world|0)-1);persist();if(save.world<=wMax()){initMenuScene();}showMenu();break;
     case 'wnext':save.world=Math.min(WORLDS.length-1,(save.world|0)+1);persist();if(save.world<=wMax()){initMenuScene();}showMenu();break;
     case 'starter':save.starter=b.dataset.id;persist();showArmory();break;
@@ -1416,10 +1445,11 @@ ov.addEventListener('click',ev=>{
 });
 $('pauseBtn').addEventListener('click',()=>showPause());
 ov.addEventListener('submit',ev=>{ev.preventDefault();const inp=$('admincode');const v=(inp&&inp.value||'').trim();
-  if(v==='53487'){save.admin=true;save.realEmbers=save.embers;persist();sfx('legend');showShop();}
+  const c=CODES.find(x=>x.code===v);
+  if(c){const fresh=codeOn(c);sfx(fresh?'legend':'click');showShop();const m=$('codemsg');if(m)m.textContent=fresh?`${c.n} is on.`:`${c.n} is already on.`;}
   else{const m=$('codemsg');if(m)m.textContent='Code not recognized.';sfx('hurt');if(inp)inp.value='';}});
 function toggleSpeed(){if(state!=='play'||run.t<300)return;
-  if(!run.fastOwned){if(!save.admin&&run.gold-run.goldBanked<45)return;if(!save.admin)run.gold-=45;run.fastOwned=true;run.speed=2;banner('Time 2×','45 credits spent');sfx('level');}
+  if(!run.fastOwned){if(!INF()&&run.gold-run.goldBanked<45)return;if(!INF())run.gold-=45;run.fastOwned=true;run.speed=2;banner('Time 2×','45 credits spent');sfx('level');}
   else{run.speed=run.speed===2?1:2;sfx('click');}}
 $('speedBtn').addEventListener('click',toggleSpeed);
 window.addEventListener('keydown',e=>{
