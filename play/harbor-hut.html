@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Harbor Hut</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<style>
+:root{--bg:#241528;--panel:#4a2e22;--panel2:#5e3c2c;--hl:#7e5238;--sh:#2f1c15;--gold:#ffd27a;--ink:#f6e7c1;color-scheme:dark;box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#241528}
+body{color:var(--ink);font:22px/1.15 VT323,ui-monospace,monospace;user-select:none;-webkit-user-select:none}
+canvas{position:fixed;left:0;top:0;image-rendering:pixelated;touch-action:manipulation}
+#hud,#msg,#sheet,#x,#sb button{background:var(--panel);box-shadow:0 0 0 3px var(--bg),inset 3px 3px 0 var(--hl),inset -3px -3px 0 var(--sh)}
+#hud{position:fixed;left:16px;top:calc(16px + env(safe-area-inset-top,0px));padding:12px 14px;color:var(--gold);font:12px/1.8 'Press Start 2P',monospace;pointer-events:none}
+#fish{font-size:15px}
+#hud small{display:block;font:22px VT323,monospace;color:#bfe6d8}
+#msg{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));max-width:88vw;padding:8px 14px;text-align:center;color:var(--gold);pointer-events:none;opacity:0}
+#msg.on{opacity:1}
+#sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;max-height:58vh;overflow:auto;padding:16px 18px calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(108%);transition:transform .18s steps(4)}
+#sheet.on{transform:none}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+h2{font:12px 'Press Start 2P',monospace;margin:0;color:var(--gold)}
+#x{all:unset;cursor:pointer;font:12px 'Press Start 2P',monospace;padding:8px 10px;background:var(--panel2);box-shadow:0 0 0 3px var(--bg),inset 3px 3px 0 var(--hl),inset -3px -3px 0 var(--sh)}
+#sb button{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:4px 12px;width:calc(100% - 6px);margin:3px 3px 14px;padding:12px 14px;background:var(--panel2);box-shadow:0 0 0 3px var(--bg),inset 3px 3px 0 var(--hl),inset -3px -3px 0 var(--sh);font:inherit}
+#x:focus-visible,#sb button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#sb button:active:not(:disabled){transform:translateY(3px)}
+#sb button:disabled{filter:saturate(.25) brightness(.75);cursor:default}
+#sb b{font:10px/1.6 'Press Start 2P',monospace;color:var(--gold)}
+#sb i{font:10px 'Press Start 2P',monospace;grid-row:1/3;grid-column:2;align-self:center;background:var(--bg);color:var(--gold);padding:8px 10px}
+#pr{background:#3a2a4a!important}
+@media (prefers-reduced-motion:reduce){#sheet{transition:none}}
+</style></head><body>
+<canvas id="c" aria-label="Your fishing hut, dock and crew. Press H for the hut, D for the dock."></canvas>
+<div id="hud"><div id="fish"></div><small id="rate"></small></div>
+<div id="msg"></div>
+<div id="sheet" role="dialog"><div class="bar"><h2 id="st"></h2><button id="x" aria-label="Close">X</button></div>
+<div id="sb"><div id="wl"></div><div id="hl"><button id="hut"></button><button id="pr"></button></div></div></div>
+<script>
+const W=[["Line Fisher",10,.2],["Net Caster",120,1.5],["Dinghy Crew",1300,9],["Trawler",14000,55],["Cannery Boat",160000,340],["Fleet Admiral",1.8e6,2100]];
+const HUT=[["Driftwood Shack",0],["Tidy Cabin",400],["Pier Lodge",12000],["Harbor Co.",6e5],["Fish Empire",3e7]];
+const COL=["#c9a063","#d9552b","#3a8fb7","#5e8e4e","#8a5cc2","#2d4a7a"],WALL=["#9a7447","#b8864f","#cdb27a","#dcd6c4","#e9e1bb"],RC=["#9b3b2e","#b23a3a","#2f6f8f","#3b5b9b","#7a3b8f"];
+const $=id=>document.getElementById(id);
+let S={fish:0,run:0,own:W.map(()=>0),hut:0,pearls:0,t:Date.now()};
+try{const j=JSON.parse(localStorage.getItem("harborhut1"));if(j&&j.own)S=j}catch(e){}
+const fmt=n=>{if(n<1e3)return n<10?n.toFixed(1):Math.floor(n)+"";const u=["K","M","B","T","Qa"];let i=-1;while(n>=1e3&&i<4){n/=1e3;i++}return n.toFixed(n<10?2:1)+u[i]};
+const cost=i=>Math.ceil(W[i][1]*1.15**S.own[i]);
+const mult=i=>2**[25,50,100,200].filter(m=>S.own[i]>=m).length;
+const g=()=>2**S.hut*(1+.1*S.pearls);
+const each=i=>W[i][2]*mult(i)*g();
+const rate=()=>.1*g()+W.reduce((a,_,i)=>a+S.own[i]*each(i),0);
+const gain=()=>Math.floor(Math.sqrt(S.run/1e6));
+let mt;const say=t=>{const m=$("msg");m.textContent=t;m.classList.add("on");clearTimeout(mt);mt=setTimeout(()=>m.classList.remove("on"),5000)};
+const rows=W.map((w,i)=>{const b=document.createElement("button");b.onclick=()=>{const q=cost(i);if(S.fish>=q){S.fish-=q;S.own[i]++;ui()}};$("wl").append(b);return b});
+$("hut").onclick=()=>{const n=HUT[S.hut+1];if(n&&S.fish>=n[1]){S.fish-=n[1];S.hut++;say("Your hut is now a "+n[0]+". All income doubled.");ui()}};
+$("pr").onclick=()=>{const n=gain();if(n>=1){S.pearls+=n;S.fish=0;S.run=0;S.hut=0;S.own=W.map(()=>0);say("Fresh start with "+S.pearls+" pearls.");ui()}};
+let mode=null;
+function open(m){mode=m;$("sheet").classList.add("on");$("st").textContent=m=="hut"?HUT[S.hut][0]:"Dock crew";$("wl").hidden=m!="dock";$("hl").hidden=m!="hut";ui()}
+function shut(){mode=null;$("sheet").classList.remove("on")}
+$("x").onclick=shut;
+addEventListener("keydown",e=>{if(e.key=="Escape")shut();if(e.key=="h"||e.key=="H")open("hut");if(e.key=="d"||e.key=="D")open("dock")});
+function ui(){
+ $("fish").textContent=fmt(S.fish)+" fish";$("rate").textContent=fmt(rate())+" fish per second";
+ if(!mode)return;
+ W.forEach((w,i)=>{const q=cost(i);rows[i].disabled=S.fish<q;rows[i].innerHTML=`<b>${w[0]}</b><i>${fmt(q)}</i><span>Owned ${S.own[i]} · ${fmt(each(i))}/s each</span>`});
+ const n=HUT[S.hut+1],h=$("hut");h.disabled=!n||S.fish<n[1];
+ h.innerHTML=n?`<b>Upgrade to ${n[0]}</b><i>${fmt(n[1])}</i><span>Doubles all income</span>`:`<b>${HUT[S.hut][0]}</b><span>Top of the harbor. Sell up to climb again.</span>`;
+ const p=gain();$("pr").disabled=p<1;
+ $("pr").innerHTML=p>=1?`<b>Sell up for ${p} pearls</b><span>Restart with +10% income per pearl, forever</span>`:`<b>Sell up for pearls</b><span>Catch ${fmt(1e6)} fish in one run to unlock</span>`;
+}
+const save=()=>{S.t=Date.now();try{localStorage.setItem("harborhut1",JSON.stringify(S))}catch(e){}};
+setInterval(save,5000);
+const off=Math.min(7200,(Date.now()-S.t)/1000);
+if(off>60){const a=rate()*off*.5;S.fish+=a;S.run+=a;say("While you were away, your crew landed "+fmt(a)+" fish.")}else say("Tap the hut to upgrade it, or the dock to hire crew.");
+const c=$("c"),x=c.getContext("2d");
+let K=3,Wd=320,H=180,HZ=0,PY=0,DL=0,T=0,last=performance.now(),gold=null,nextG=8,fl=[],tk=0,uT=0,hs={};
+function size(){K=Math.min(5,Math.max(2,Math.floor(Math.min(innerWidth/240,innerHeight/150))));Wd=Math.ceil(innerWidth/K);H=Math.ceil(innerHeight/K);c.width=Wd;c.height=H;c.style.width=Wd*K+"px";c.style.height=H*K+"px";HZ=Math.round(H*.36);PY=Math.round(H*.58);DL=Wd-6}
+addEventListener("resize",size);size();
+const R=(c,a,b,w,h)=>{x.fillStyle=c;x.fillRect(Math.round(a),Math.round(b),w,h)};
+const L=(a,b,k)=>a.map((v,i)=>v+(b[i]-v)*k),C=a=>`rgb(${a.map(Math.round)})`,cl=v=>Math.max(0,Math.min(1,v));
+const OUT="#2a1a2e",hi=c=>C(L(c,[255,245,220],.3)),lo=c=>C(L(c,[20,10,40],.4));
+const box=(c,a,b,w,h)=>{R(OUT,a-1,b-1,w+2,h+2);R(C(c),a,b,w,h);R(hi(c),a,b,w,1);R(hi(c),a,b,1,h);R(lo(c),a,b+h-1,w,1);R(lo(c),a+w-1,b,1,h)};
+const disc=(c,cx,cy,r,dt)=>{for(let j=-r;j<=r;j++){const w=Math.floor(Math.sqrt(r*r-j*j+.5));if(!dt)R(c,cx-w,cy+j,2*w+1,1);else for(let i=-w;i<=w;i++)if(((i+j)&1)==0)R(c,cx+i,cy+j,1,1)}};
+const G={H:"101101111101101",U:"101101101101111",T:"111010010010010",C:"111100100100111",R:"110101110101101",E:"111100110100111",W:"101101101111101","!":"010010010000010","+":"000010111010000",".":"000000000000010",K:"101101110101101",M:"101111111101101",B:"110101110101110",Q:"111101101111001",0:"111101101101111",1:"010110010010111",2:"111001111100111",3:"111001111001111",4:"101101111001001",5:"111100111001111",6:"111100111101111",7:"111001001010010",8:"111101111101111",9:"111101111001111"};
+function pt(s,px,py,col,sc,sd){[...s].forEach((ch,n)=>{const g=G[ch];if(!g)return;for(let i=0;i<15;i++)if(g[i]=="1"){const gx=px+n*4*sc+(i%3)*sc,gy=py+((i/3)|0)*sc;if(sd)R(sd,gx,gy+sc,sc,sc);R(col,gx,gy,sc,sc)}})}
+function bands(y0,y1,f){for(let y=y0;y<y1;y+=6){R(C(f(y)),0,y,Wd,Math.min(6,y1-y));if(y+6<y1){const c2=C(f(y+6));for(let xx=0;xx<Wd;xx+=2){R(c2,xx,y+4,1,1);R(c2,xx+1,y+5,1,1)}}}}
+const BC=[[201,160,99],[217,85,43],[58,143,183],[94,142,78],[138,92,194],[45,74,122]];
+const HD=[{w:30,h:18,wc:[150,108,70],rc:[130,138,150]},{w:40,h:26,wc:[196,138,84],rc:[176,52,58]},{w:52,h:38,wc:[218,196,146],rc:[44,111,138]},{w:62,h:44,wc:[176,72,62],rc:[58,78,150]},{w:74,h:50,wc:[234,228,210],rc:[150,60,170]}];
+const EX=[12,14,14,34,26];
+let wins=[],lamps=[];
+function boat(i,px,py){
+ const w=12+i*5,c=BC[i];
+ R("#e8f6fa",px-8,py+4,6,1);R("#e8f6fa",px-13,py+5,4,1);
+ box(c,px,py,w,4);R("#f0e6c8",px+1,py+1,w-2,1);
+ if(i==1){box([58,110,165],px+3,py-6,3,6);box([240,200,160],px+3,py-9,3,3);R(OUT,px+w-3,py-9,1,9);R(OUT,px+w-3,py-9,7,1);box([210,226,200],px+w+1,py-7,4,6)}
+ if(i==2){const mx=px+(w>>1);R(OUT,mx,py-14,1,14);for(let r=0;r<11;r++){const q=Math.ceil(1+r*.7);R(OUT,mx+q+1,py-13+r,1,1);R("#f4efe0",mx+1,py-13+r,q,1);R("#cfc7b0",mx+q,py-13+r,1,1)}}
+ if(i>=3){box([226,228,236],px+4,py-7,w*.4|0,7);R("#5ab0c8",px+5,py-5,3,2);R(OUT,px+w-7,py-11,1,11);R(OUT,px+w-7,py-11,7,1)}
+ if(i>=4){const sx=px+(w*.55|0);box([204,60,60],sx,py-12,4,8);for(let q=0;q<3;q++)R(q?"#c6cada":"#f2f2f8",sx+q*2+Math.sin(T+q)*1.5,py-15-q*4-(T*5)%4,3,3)}
+ if(i==5){R(OUT,px+3,py-18,1,12);R("#e33",px+4,py-18,6,3)}
+}
+function hut(lv,hx,n){
+ const D=HD[lv],w=D.w,h=D.h,y0=PY-h,rr=lv?Math.min(9,(w+8)/6|0):0,ry0=y0-rr*2,lit=n>.15,gl=lit?[255,214,110]:[150,205,232];
+ const win=(wx,wy,ww,hh)=>{box([90,60,40],wx,wy,ww,hh);R(C(gl),wx+1,wy+1,ww-2,hh-2);R("#5a3a28",wx+(ww>>1),wy+1,1,hh-2);R("#5a3a28",wx+1,wy+(hh>>1),ww-2,1);wins.push([wx+1,wy+1,ww-2,hh-2]);if(lv==1){box([44,111,138],wx-3,wy,3,hh);box([44,111,138],wx+ww,wy,3,hh)}};
+ const dw=lv>=3?10:7,dh=lv>=3?15:11,dx=lv<2?hx+w-dw-5:hx+((w-dw)>>1);
+ if(lv==3){const cx=hx+w+8,sw=Math.sin(T)*2;box([96,96,108],cx,PY-42,3,42);box([96,96,108],cx-4,PY-44,26,3);R("#d8c898",cx+16+sw,PY-41,1,14);box([200,156,88],cx+12+sw,PY-27,9,8)}
+ if(lv==4){const tx=hx+w+8;box([240,236,226],tx,PY-46,9,46);R("#d33",tx,PY-36,9,5);R("#d33",tx,PY-22,9,5);box([70,70,80],tx-2,PY-50,13,3);box(lit?[255,230,120]:[255,224,102],tx+1,PY-58,7,7);box([200,50,60],tx-1,PY-62,11,4);lamps.beam=tx+5}
+ if(lv==0)for(let px=0;px<w;px+=5){const ph=h-(px*7%5);box(L(D.wc,[0,0,0],(px/5%3)*.14),hx+px,PY-ph,5,ph)}
+ else{box(D.wc,hx,y0,w,h);const st=lv==4?6:4,m=lv==3?"#dcc4a4":lo(D.wc);for(let y=y0+st,r=0;y<PY-1;y+=st,r++){R(m,hx+1,y,w-2,1);if(lv>=3)for(let px=(r%2)*st;px<w-2;px+=st*2)R(m,hx+1+px,y+1,1,st-1)}}
+ if(lv>=2)box([122,78,46],hx-2,PY-21,w+4,3);
+ if(lv==4){R("#e0a830",hx,y0,w,2);R("#e0a830",hx,PY-3,w,3);for(const bx of[hx+3,hx+w-8]){R(OUT,bx-1,y0+12,7,17);R("#b0343a",bx,y0+12,5,15);R("#ffd23f",bx+1,y0+17,3,3)}}
+ box([88,54,34],dx,PY-dh,dw,dh);R("#ffd23f",dx+dw-3,PY-(dh>>1),1,1);
+ if(lv>=3){R(OUT,dx-5,PY-dh-5,dw+10,1);for(let k=0;k<dw+8;k++)R((k>>1)%2?"#f2f2f2":"#d33",dx-4+k,PY-dh-4,1,4)}
+ if(lv==0){box([44,30,26],hx+5,PY-12,5,5);R(C(gl),hx+6,PY-11,3,3);wins.push([hx+6,PY-11,3,3])}
+ if(lv==1)win(hx+6,PY-18,8,9);
+ if(lv>=2){const gh=lv>=3?10:9,gy=PY-(lv>=3?17:14),n2=lv==2?3:4;win(hx+5,gy,gh,gh);win(hx+w-5-gh,gy,gh,gh);for(let k=0;k<n2;k++)win(hx+7+k*(((w-22)/(n2-1))|0),y0+6,7,8)}
+ const cxm=hx+(w*.66|0);
+ if(lv>=1&&lv<4)box([126,104,96],cxm,ry0-5,5,rr*2+4);
+ if(lv==0){for(let c=-3;c<w+4;c++){const y=y0-1-Math.floor((w+3-c)*5/(w+6));R(OUT,hx+c,y-1,1,5);R((c>>1)%2?"#aab4c0":"#8792a0",hx+c,y,1,3)}R("#a85a38",hx+4,y0-3,3,2);box([85,85,95],hx+w-7,y0-13,3,10)}
+ else for(let r=0;r<rr;r++){const rw=Math.round((w+8)*(1-r/rr*.86)),rx=hx-4+((w+8-rw)>>1),ry=y0-2-r*2;R(OUT,rx-1,ry,rw+2,2);R(C(D.rc),rx,ry,rw,2);R(hi(D.rc),rx,ry,rw,1);for(let q=(r%2)*3;q<rw;q+=6)R(lo(D.rc),rx+q,ry+1,1,1)}
+ if(lv<4){const sx0=lv==0?hx+w-6:cxm+2,sy0=lv==0?y0-15:ry0-8;for(let q=0;q<4;q++)R(q<2?"#f2f2f8":"#c6cada",sx0+Math.sin(T*.9+q*1.7)*2+q,sy0-q*5-(T*5)%5,3,3)}
+ if(lv==2){const fx=hx+(w>>1);R(OUT,fx,ry0-14,1,14);for(let k=0;k<6;k++)R("#e33",fx+1+k,ry0-14+Math.round(Math.sin(T*5+k)),1,4)}
+ if(lv==4){const cx=hx+(w>>1),ty=ry0-2,dd=[4,9,12,14];box([226,218,200],cx-7,ty-10,14,14);box([250,244,230],cx-3,ty-8,7,7);R(OUT,cx,ty-7,1,3);R(OUT,cx,ty-5,2,1);dd.forEach((q,j)=>R(OUT,cx-(q>>1)-1,ty-14+j,q+2,1));dd.forEach((q,j)=>R("#ffd23f",cx-(q>>1),ty-14+j,q,1));R("#ffd23f",cx,ty-22,1,8);R("#ffd23f",cx-3,ty-23,6,2)}
+ if(lv==0)box([140,100,60],hx+w+4,PY-7,7,7);
+ if(lv==1){box([138,90,44],hx+w+4,PY-9,7,9);R("#3a2a1a",hx+w+4,PY-6,7,1)}
+ return lv==4?PY-92:PY-(lv==0?h+8:h+rr*2+(lv==2?14:6));
+}
+function board(t,cx,hot){
+ const w=t.length*8+6,y=PY+10,bx=Math.round(cx-w/2),b2=bx+Math.round(Math.sin(T*1.6));
+ for(let k=0;k<4;k++){const c=k%2?"#7a8294":"#d0d6e0";R(c,bx+3,y+k,1,1);R(c,bx+w-4,y+k,1,1)}
+ box([160,106,60],b2,y+4,w,15);R("#46281c",b2+2,y+6,w-4,11);pt(t,b2+3,y+8,"#ffd27a",2,OUT);
+ for(const[nx,ny]of[[1,5],[w-2,5],[1,17],[w-2,17]])R("#f0e8d0",b2+nx,y+ny,1,1);
+ if(hot){const cx2=b2+w+7,cy=y+11+Math.round(Math.sin(T*6)*2);disc(OUT,cx2,cy,5);disc("#ffd23f",cx2,cy,4);pt("!",cx2-1,cy-2,OUT,1)}
+}
+function draw(){
+ wins=[];lamps=[];
+ const ang=T/120*Math.PI*2,s=Math.sin(ang),d=cl(s*2+.5),k1=cl((s+.2)/.4),k2=cl((s-.1)/.5),n=1-d,lv=S.hut;
+ const top=L(L([14,12,48],[96,70,150],k1),[64,150,226],k2),bot=L(L([48,30,84],[255,150,96],k1),[176,226,244],k2);
+ bands(0,HZ,y=>L(top,bot,y/HZ));
+ if(n>.4)for(let i=0;i<34;i++)if(Math.sin(T*2+i*2.3)>-.5)R("#fff",(i*67)%Wd,(i*41)%(HZ-8),1,1);
+ const sx=Wd*.5-Wd*.42*Math.cos(ang),sy=HZ-HZ*.8*s,mx=Wd*.5+Wd*.42*Math.cos(ang),my=HZ+HZ*.8*s;
+ if(s>-.2){disc("#ffd98a",sx,sy,13,1);disc("#ffe9a8",sx,sy,9);disc("#fff6d0",sx,sy,6)}
+ if(s<.2){disc("#9fb0e8",mx,my,11,1);disc("#e8eeff",mx,my,6);R("#c0c8e8",mx-2,my-1,2,2);R("#c0c8e8",mx+1,my+2,2,1)}
+ const cc=C(L([90,90,140],[255,252,248],d)),cs=C(L([60,60,110],[200,215,235],d));
+ for(let i=0;i<5;i++){const cx=((i*83+T*(1.5+i*.6))%(Wd+80))-40,cy=10+((i*23)%(HZ*.5|0));R(cc,cx,cy+1,28,4);R(cc,cx+4,cy-2,12,3);R(cc,cx+14,cy-3,9,4);R(cs,cx,cy+4,28,1)}
+ const ic=C(L([20,28,60],[74,120,126],d)),ix=Math.round(Wd*.6);
+ for(let r=0;r<9;r++)R(ic,ix+r*2,HZ-r,46-r*4,1);
+ R(ic,ix+23,HZ-17,1,9);R(ic,ix+19,HZ-18,9,1);R(ic,ix+20,HZ-19,7,1);R(ic,ix+21,HZ-20,5,1);
+ const sh=L([26,44,96],[84,182,200],d),dp=L([8,16,48],[22,72,128],d);
+ bands(HZ,H,y=>{const k=(y-HZ)/(H-HZ);return L(L(sh,dp,k),bot,(1-k)*.35)});
+ const sun=s>-.15,rx=sun?sx:mx;
+ for(let y=HZ+2;y<H;y+=3){const k=(y-HZ)/(H-HZ),w2=Math.round((4+k*20)*(.5+.5*Math.sin(T*3+y)));R(sun?"#ffe9a0":"#dfe6ff",rx-(w2>>1),y,w2,1)}
+ x.globalAlpha=.4;for(let r=0;HZ+4+r*5<H;r++)for(let k=0;k<7;k++)R("#e6f6fa",((k*47+r*23+T*(3+r*.3)*(r%2?1:-1))%(Wd+20)+Wd+20)%(Wd+20)-10,HZ+4+r*5,2+r%3*2,1);
+ x.globalAlpha=.22;for(let i=0;i<7;i++){const fx=((i*61+T*(5+i%3*3))%(Wd+30))-15,fy=HZ+14+((i*43)%(H-HZ-30));R("#04101c",fx,fy,6,2);R("#04101c",fx-2,fy-1,2,4)}x.globalAlpha=1;
+ if(d>.5)for(let i=0;i<24;i++)if(Math.sin(T*2+i*1.7)>.92)R("#fff",(i*53)%Wd,HZ+4+(i*37)%(H-HZ-6),2,1);
+ const sp=8+Math.max(0,(H-PY-96)/4.2|0);
+ for(let i=1;i<6;i++)for(let k=0;k<Math.min(S.own[i],6);k++)boat(i,((k*53+i*67+T*(3+i*.8))%(Wd+80))-50,PY+30+(i-1)*sp+Math.round(Math.sin(T*2+k+i)));
+ const hx=6,edge=hx+HD[lv].w+EX[lv];
+ for(let p=8;p<DL-4;p+=26){box([74,48,36],p,PY+9,4,20);R("#e6f6fa",p-2,PY+26,8,1);R("#9ccfe0",p-1,PY+27,6,1);if(p+26<DL-4)for(let k=0;k<22;k++)R("#c8b078",p+4+k,PY+12+Math.round(Math.sin(k/22*Math.PI)*3),1,1);if(p>edge&&p<DL-60)lamps.push(p)}
+ for(let px=0;px<DL;px+=9)box((px/9)%2?[160,112,66]:[150,104,60],px,PY,9,6);
+ box([100,64,40],0,PY+6,DL,4);for(let p=3;p<DL;p+=12)R("#c8c0b0",p,PY+8,1,1);
+ lamps.forEach(p=>{R(OUT,p+1,PY-10,1,10);box([232,217,168],p-1,PY-15,5,5)});
+ if(lv>=1){box([138,90,44],DL-46,PY-9,8,9);R("#3a2a1a",DL-46,PY-6,8,1);R("#3a2a1a",DL-46,PY-3,8,1)}
+ if(lv>=3){box([196,154,88],DL-37,PY-7,8,7);R("#8a6a38",DL-37,PY-4,8,1);R("#8a6a38",DL-34,PY-7,1,7)}
+ const htop=hut(lv,hx,n),fs=edge+4,nf=Math.min(S.own[0],8,Math.max(0,Math.floor((DL-58-fs)/11)));
+ for(let k=0;k<nf;k++){const px=fs+k*11,b=Math.round(Math.sin(T*2+k)),sc=[[58,110,165],[107,142,78],[165,74,90]][k%3];
+  R(OUT,px-2,PY-16,7,3);R(["#e8c34a","#d9552b","#5aa"][k%3],px-1,PY-15,5,2);box([240,200,160],px,PY-13,4,4);box(sc,px,PY-9,4,9);
+  R("#7a5a3a",px+4,PY-10,3,1);R("#7a5a3a",px+7,PY-12,3,1);R("#7a5a3a",px+10,PY-14,3,1);R("#e8e8e8",px+13,PY-14,1,36+b);R("#e33",px+12,PY+22+b,3,2);R("#fff",px+12,PY+22+b,3,1)}
+ x.globalAlpha=[0,.15,.28,.42][Math.round(n*3)];R("#0a1040",0,0,Wd,H);x.globalAlpha=1;
+ if(n>.15){wins.forEach(q=>{R("#ffd36a",...q);x.globalAlpha=.4;disc("#ffb347",q[0]+(q[2]>>1),q[1]+(q[3]>>1),9,1);x.globalAlpha=1});
+  lamps.forEach(p=>{R("#ffcf6a",p,PY-14,3,3);x.globalAlpha=.4;disc("#ffcf6a",p+1,PY-12,11,1);x.globalAlpha=1});
+  if(lamps.beam){const bx=lamps.beam,sg=Math.cos(T*1.2)>0?1:-1,ln=Math.abs(Math.cos(T*1.2))*110;x.globalAlpha=.5*n;for(let i=2;i<ln;i++)for(let j=-8;j<=8;j++)if(((i+j)&1)==0&&Math.abs(j)<=1+i*.07)R("#fff6b0",bx+sg*i,PY-55+j,1,1);x.globalAlpha=1}}
+ if(d>.3)for(let i=0;i<3;i++){const gx=((i*97+T*(10+i*4))%(Wd+40))-20,gy=14+i*14+Math.sin(T*3+i)*3,f=Math.sin(T*9+i)>0?1:0;R("#fff",gx-3,gy+f,3,1);R("#fff",gx,gy+1-f,3,1);R(OUT,gx,gy+2,1,1)}
+ if(gold){const gx=gold.x0+gold.p*130,gy=PY+18-46*Math.sin(gold.p*Math.PI);gold.gx=gx;gold.gy=gy;x.globalAlpha=.5;disc("#fff2a0",gx+5,gy+2,10,1);x.globalAlpha=1;R(OUT,gx-1,gy-1,12,7);R(OUT,gx-4,gy-3,4,11);R("#ffd23f",gx,gy,10,5);R("#ffd23f",gx-3,gy-2,3,9);R("#fff",gx+3,gy,3,1);R(OUT,gx+7,gy+1,1,1)}
+ fl.forEach(f=>{x.globalAlpha=Math.max(0,1-f.a/2);pt(f.t,f.x,htop-8-f.a*10,"#fff2a8",1,OUT)});x.globalAlpha=1;
+ const nx=HUT[lv+1],hotH=nx&&S.fish>=nx[1],hotD=W.some((w,i)=>S.fish>=cost(i));
+ board("HUT",hx+(HD[lv].w>>1),hotH);board("CREW",DL-26,hotD);
+ hs.hut={x:0,y:htop-6,w:HD[lv].w+EX[lv]+10,h:PY-htop+34};hs.dock={x:0,y:PY-16,w:DL,h:46};
+ x.globalAlpha=.06;for(let y=0;y<H;y+=3)R("#000",0,y,Wd,1);x.globalAlpha=1;
+}
+function loop(now){
+ const dt=Math.min(.25,(now-last)/1000);last=now;T+=dt;
+ const a=rate()*dt;S.fish+=a;S.run+=a;
+ tk+=dt;if(tk>=1){tk=0;fl.push({a:0,x:14+Math.random()*30,t:"+"+fmt(rate())})}
+ fl.forEach(f=>f.a+=dt);fl=fl.filter(f=>f.a<2);
+ if(gold){gold.p+=dt/3.2;if(gold.p>1){gold=null;nextG=T+40+Math.random()*50}}else if(T>nextG)gold={p:0,x0:Wd*.35+Math.random()*Wd*.3};
+ uT+=dt;if(uT>.2){uT=0;ui()}
+ draw();requestAnimationFrame(loop);
+}
+const hit=(r,mx,my)=>r&&mx>=r.x&&mx<=r.x+r.w&&my>=r.y&&my<=r.y+r.h;
+c.addEventListener("pointerdown",e=>{
+ const mx=e.clientX/K,my=e.clientY/K;
+ if(gold&&Math.abs(mx-(gold.gx+5))<18&&Math.abs(my-(gold.gy+2))<18){const b=Math.max(rate()*60,30);S.fish+=b;S.run+=b;say("Golden catch! +"+fmt(b)+" fish");gold=null;nextG=T+40+Math.random()*50;return}
+ if(hit(hs.hut,mx,my))open("hut");else if(hit(hs.dock,mx,my))open("dock");else shut();
+});
+c.addEventListener("pointermove",e=>{const mx=e.clientX/K,my=e.clientY/K;c.style.cursor=gold||hit(hs.hut,mx,my)||hit(hs.dock,mx,my)?"pointer":"default"});
+ui();requestAnimationFrame(loop);
+</script></body></html>
