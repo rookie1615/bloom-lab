@@ -80,7 +80,7 @@ const mkNb=()=>NBD.map(x=>({...x,rel:Math.floor(Math.random()*40)-10,trade:false
 const nbStr=n=>n.b+Math.floor(S.day/4),tradeFood=()=>S.nb.filter(n=>n.trade&&n.k==='food').length*6,tradeGold=()=>S.nb.reduce((a,n)=>a+(n.trade?(n.k==='gold'?10:n.k==='army'?5:0):0),0),tradeDef=()=>S.nb.filter(n=>n.trade&&n.k==='army').length*4;
 const upow=()=>S.u.spear+S.u.arch*1.5+S.u.knight*2,bc=k=>S.god||S.free?0:Math.round(B[k].c*(S.res.mason?.85:1));
 const Q=[['Build 2 more houses',()=>cnt('house')>=3,60],['Reach 12 people',()=>pop()>=12,80],['Build 3 farms',()=>cnt('farm')>=3,80],['Upgrade your castle to Lv2',()=>S.lvl>=2,100],['Recruit 5 soldiers',()=>S.sold>=5,100],['Make a trade deal with a neighbor',()=>S.nb.some(n=>n.trade),120],['Research a technology',()=>Object.keys(S.res).length>0,120],['Win a battle',()=>S.wins>=1,150],['Reach 30 people',()=>pop()>=30,200],['Ally with a kingdom',()=>S.nb.some(n=>n.ally),250],['Reach Kingdom rank (50 people)',()=>pop()>=50,400],['Reach Empire rank (100 people)',()=>pop()>=100,0]];
-const =id=>document.getElementById(id),cv=('cv'),g=cv.getContext('2d');
+const $=id=>document.getElementById(id),cv=$('cv'),g=cv.getContext('2d');
 const rnd=(i,k)=>{const v=Math.sin(i*12.9898+k*78.233)*43758.5453;return v-Math.floor(v)};
 const nb=i=>{const x=i%W,y=(i/W)|0,a=[];if(x>0)a.push(i-1);if(x<W-1)a.push(i+1);if(y>0)a.push(i-W);if(y<H-1)a.push(i+W);return a};
 const isR=i=>MAP[i]==='r',nearR=i=>nb(i).some(isR);
@@ -98,7 +98,7 @@ function init(t){
   for(const [x,y] of [[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[0,1]])S.own[(cy+y)*W+cx+x]=true;
   S.b[CI]='castle';S.b[CI-W]='house';S.b[CI+1]='farm';
   cam.x=cx*64+32-320;cam.y=cy*64+32-224;$('start').style.display='none';
-  peasants=[];soldiers=[];R=null;rallyMode=false;tab='play';('tax').value=10;('log').innerHTML='';
+  peasants=[];soldiers=[];R=null;rallyMode=false;tab='play';$('tax').value=10;$('log').innerHTML='';
   log('Welcome, Your Majesty! Houses hold 5 people. Keep them fed and happy.');ui();
 }
 function log(m,c){const d=document.createElement('div');d.textContent='Day '+S.day+': '+m;if(c)d.className=c;$('log').prepend(d)}
@@ -340,4 +340,3 @@ $('opts').innerHTML=Object.entries(STARTS).map(([k,v])=>'<button class="b" style
 document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>init(b.dataset.k));
 requestAnimationFrame(frame);
 </script></body></html>
-
