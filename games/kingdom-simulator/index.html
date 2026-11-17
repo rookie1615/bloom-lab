@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kingdom Simulator</title>
+<style>
+:root{--bg:#f4ecd8;--fg:#2b2418;--card:#fffaf0;--line:#c9b98f;--acc:#8a5a1c;--good:#2f7d32;--bad:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1a14;--fg:#efe6d0;--card:#2a261c;--line:#5a5035;--acc:#e0b060;--good:#7bd37f;--bad:#ff8a80}}
+:root[data-theme="dark"]{--bg:#1c1a14;--fg:#efe6d0;--card:#2a261c;--line:#5a5035;--acc:#e0b060;--good:#7bd37f;--bad:#ff8a80}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 Georgia,serif}
+main{max-width:1050px;margin:0 auto;padding:12px}
+h1{font-size:20px;margin:4px 0 8px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px;margin-bottom:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:13px}
+.stat b{display:block;font-size:16px}
+.wrap{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:800px){.wrap{grid-template-columns:1.6fr 1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px}
+canvas{width:100%;height:auto;display:block;border-radius:8px;border:3px solid #5b3a1a;touch-action:none;cursor:pointer}
+button.b{font:inherit;font-size:13px;background:var(--acc);color:var(--bg);border:0;border-radius:6px;padding:5px 9px;cursor:pointer;margin:2px}
+button.b.sel{outline:3px solid var(--fg)}
+button.b:disabled{opacity:.4;cursor:not-allowed}
+#log{height:150px;overflow-y:auto;font-size:13px}
+#log div{border-bottom:1px solid var(--line);padding:2px 0}
+.good{color:var(--good)}.bad{color:var(--bad)}
+input[type=range]{width:100%}hr{border:0;border-top:1px solid var(--line)}small{opacity:.8}#tabs{display:flex;flex-wrap:wrap;margin-bottom:6px}details{margin:5px 0}summary{cursor:pointer}
+</style></head><body><main>
+<h1>👑 Kingdom Simulator <span id="rank"></span></h1>
+<div class="stats" id="stats"></div>
+<div class="wrap">
+<div class="card"><canvas id="cv" width="640" height="448"></canvas><div id="info" style="margin-top:6px;font-size:13px;min-height:20px"></div></div>
+<div>
+<div id="tabs"></div>
+<div class="card pn" id="p-play"><b>Castle</b> <span id="clv"></span><br><button class="b" id="up"></button>
+<hr><b>Build</b><br><span id="bb"></span>
+<hr><b>Taxes: <span id="taxv"></span>%</b><input type="range" id="tax" min="0" max="30" value="10">
+<small>More gold, less happiness. Unhappy people leave.</small>
+<hr><b>Army</b><br><span id="rc"></span><button class="b" id="rally">🚩 Set rally point</button><button class="b" id="sell">Sell 30 food (+20g)</button>
+<hr>Speed: <button class="b" data-s="1">x1</button><button class="b" data-s="2">x2</button><button class="b" data-s="4">x4</button>
+<button class="b" id="pause">Pause</button><button class="b" id="restart">Restart</button></div>
+<div class="card pn" id="p-dip" style="display:none"></div>
+<div class="card pn" id="p-res" style="display:none"></div>
+<div class="card pn" id="p-quest" style="display:none"></div>
+<div class="card pn" id="p-info" style="display:none;font-size:13px">
+<details open><summary><b>🗺️ Land and controls</b></summary>Drag the map or use WASD/arrows to move. Click wild land next to your border to buy it: the price rises as you grow and mountains cost extra. Forest is cleared when bought. Rivers can’t be built on, but farms and docks beside them do better. Click a building to demolish it (half refund). Use x2/x4 to speed up time.</details>
+<details><summary><b>🏠 Buildings</b></summary>House (40g): homes for 5 people. Farm (50g): +6 food a day, +3 more beside the river. Barracks (80g): +5 soldier slots. Market (120g, Castle 2): +8 gold a day. Mine (150g, Castle 2, on a mountain): +12 gold a day. Dock (90g, Castle 2, beside the river): +8 food a day. Tavern (130g, Castle 3): +8 happiness. Watchtower (160g, Castle 3): +3 defense.</details>
+<details><summary><b>👑 Castle</b></summary>Upgrade to Lv2 for 200g and Lv3 for 500g. Each level adds 5 homes, 2 defense and 5 gold a day, and unlocks new buildings.</details>
+<details><summary><b>💰 Taxes</b></summary>Each peasant pays tax% × 0.2 gold a day (10% = 2 gold each). Soldiers cost 1 gold a day. Higher taxes lower happiness by about 2.2 points per 1%.</details>
+<details><summary><b>🌾 Food</b></summary>Peasants eat 0.5 food a day and soldiers eat 1. Farms and docks produce it: spring ×1, summer ×1.2, autumn ×1.5, winter ×0.4. The store holds up to 250. A full store (4+ food per person) adds happiness and attracts newcomers. If food runs out, families starve and leave. You can sell 30 food for 20 gold.</details>
+<details><summary><b>😊 People and happiness</b></summary>Newcomers join when happiness is above 55 and there are free homes. People leave when it drops below 40, when there are no homes, or in famine. Happiness: 90 minus taxes, +6 well fed, +8 per Tavern (max 16), +8 Fair Laws, −30 famine, −15 overcrowded.</details>
+<details><summary><b>📰 News and events</b></summary>The Royal news log shows what happens each day. Every 50 days a good or bad event strikes (festival, caravan, wedding, gold, plague, drought, fire, warlord). Seasons change every 25 days.</details>
+<details><summary><b>⚔️ Battles and army</b></summary>Bandits attack about every 7 days; stronger defense means fewer attacks. Raiders come as Brutes, Slingers and Riders. Spearmen beat Riders, Archers beat Brutes and Knights beat Slingers (double power against their match). Defense also comes from the castle, towers, allies and Tactics. A rally point (🚩) gathers your soldiers and gives +25% defense.</details>
+<details><summary><b>🤝 Neighbors</b></summary>Gifts raise their mood. At mood 20+ you can sign a trade deal (Eastmark +6 food, Goldvale +10 gold, Ironhold +5 gold and +4 defense). At 50+ with trade you can ally, and allies help in battles. Attacking loots gold but sours relations. Hostile neighbors may invade.</details>
+<details><summary><b>🔬 Research and 📜 quests</b></summary>Research costs gold and gives permanent bonuses. Advisor Aldric gives quests with gold rewards; finish them all to reach Empire.</details>
+</div>
+<div class="card pn" id="p-code" style="display:none;font-size:13px"><b>🔑 Admin codes</b><br><input id="codein" placeholder="Type a code…" autocomplete="off" style="font:inherit;padding:5px;width:60%"> <button class="b" data-act="code">Apply</button><hr><small>Enter a numeric admin code.</small></div>
+<div class="card" style="margin-top:10px"><b>Royal news</b><div id="log"></div></div>
+</div></div></main>
+<div id="start" style="position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:9;padding:16px"><div class="card" style="max-width:420px;width:100%"><h1>👑 Choose your land</h1><div id="opts"></div><small>Drag the map or use WASD/arrow keys to look around. The minimap is in the corner.</small></div></div>
+<script>
+let W=28,H=20,MAP='',CI=0;const DAY=15000,SH='rgba(0,0,0,.25)',cam={x:0,y:0};
+const STARTS={plains:{n:'🌾 Green Plains',d:'Open fertile land. Easy start.',g:200,f:40,ft:.3,mt:.86,rv:1},river:{n:'🌊 Riverlands',d:'Two rivers: great for farms and docks.',g:170,f:50,ft:.4,mt:.88,rv:2},high:{n:'⛰️ Highlands',d:'Mountains full of ore, little farmland.',g:260,f:20,ft:.35,mt:.55,rv:1},forest:{n:'🌲 Deep Forest',d:'Dense woods to clear. Quiet and safe.',g:180,f:35,ft:.62,mt:.9,rv:1}};
+function gen(t){const P=STARTS[t],s=Math.random()*100,cx=W>>1,cy=H>>1,a=Array(W*H).fill('g');
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const nf=(Math.sin(x*.55+s)+Math.sin(y*.5+s*1.3)+Math.sin((x+y)*.31+s*.7)+3)/6,nm=(Math.sin(x*.4+s*2)+Math.sin(y*.45+s*.4)+Math.sin((x-y)*.27+s*1.7)+3)/6;a[y*W+x]=nm>P.mt?'m':nf<P.ft?'f':'g'}
+ for(let r=0;r<P.rv;r++){let x=cx+(r%2?-1:1)*(6+Math.floor(Math.random()*5));for(let y=0;y<H;y++){a[y*W+x]='r';x+=Math.floor(Math.random()*3)-1;x=Math.max(1,Math.min(W-2,x));if(Math.abs(x-cx)<5)x=cx+(x>=cx?5:-5)}}
+ for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)a[(cy+dy)*W+cx+dx]='g';return a.join('')}
+const B={house:{n:'House',c:40,l:1,note:'Houses 5 people'},farm:{n:'Farm',c:50,l:1,note:'+6 food/day (+3 beside the river)'},barracks:{n:'Barracks',c:80,l:1,note:'+5 soldier slots'},
+market:{n:'Market',c:120,l:2,note:'+8 gold/day'},mine:{n:'Mine',c:150,l:2,note:'+12 gold/day (mountains only)'},dock:{n:'Dock',c:90,l:2,note:'+8 food/day (beside the river)'},
+tavern:{n:'Tavern',c:130,l:3,note:'+8 happiness'},tower:{n:'Watchtower',c:160,l:3,note:'+3 defense against raids'}};
+const EM={house:'🏠',farm:'🌾',barracks:'🏰',market:'🛒',mine:'⛏️',dock:'⚓',tavern:'🍺',tower:'🗼'};
+const UNL={1:'Market, Mine, Dock',2:'Tavern, Watchtower'};
+const SEAS=['Spring','Summer','Autumn','Winter'],SEM=['🌸','☀️','🍂','❄️'],FM=[1,1.2,1.5,.4];
+const GC=[['#8fd15f','#86c958'],['#7ec455','#76bb4f'],['#c7b04a','#bda544'],['#e8f1f5','#dde8ee']];
+const TC=[['#2f8a3a','#3aa04a'],['#1f5a2a','#2e7a38'],['#d9731f','#c25a14'],['#e6eef2','#cfdde4']];
+const FLAV=['Children play beside the river.','A bard sings in the square.','Farmers trade stories at dawn.','A traveler admires your kingdom.','Smoke curls from the chimneys.'];
+let S,sel='house',paused=false,hover=-1,tm=0,pp=0,last=0,peasants=[],soldiers=[],R=null,rallyMode=false,tab='play';
+const UT={spear:{n:'Spearman',e:'🗡️',c:25},arch:{n:'Archer',e:'🏹',c:40,req:'arch'},knight:{n:'Knight',e:'🛡️',c:60,req:'knight'}};
+const RS={crop:{n:'Crop Rotation',c:200,d:'+25% food from farms and docks'},iron:{n:'Iron Tools',c:250,d:'Mines make 18 gold a day instead of 12'},mason:{n:'Masonry',c:200,d:'Buildings cost 15% less'},arch:{n:'Archery',c:300,d:'Unlocks Archers (strong vs Brutes)'},knight:{n:'Chivalry',c:450,d:'Unlocks Knights (strong vs Slingers)',req:'arch'},tact:{n:'Tactics',c:350,d:'+20% defense in battles'},law:{n:'Fair Laws',c:300,d:'+8 happiness'}};
+const NBD=[{n:'Eastmark',e:'🌾',k:'food',d:'Farmers. Trade: +6 food/day',b:6},{n:'Goldvale',e:'💰',k:'gold',d:'Merchants. Trade: +10 gold/day',b:9},{n:'Ironhold',e:'⚒️',k:'army',d:'Warriors. Trade: +5 gold, +4 defense',b:12}];
+const mkNb=()=>NBD.map(x=>({...x,rel:Math.floor(Math.random()*40)-10,trade:false,ally:false}));
+const nbStr=n=>n.b+Math.floor(S.day/4),tradeFood=()=>S.nb.filter(n=>n.trade&&n.k==='food').length*6,tradeGold=()=>S.nb.reduce((a,n)=>a+(n.trade?(n.k==='gold'?10:n.k==='army'?5:0):0),0),tradeDef=()=>S.nb.filter(n=>n.trade&&n.k==='army').length*4;
+const upow=()=>S.u.spear+S.u.arch*1.5+S.u.knight*2,bc=k=>S.god||S.free?0:Math.round(B[k].c*(S.res.mason?.85:1));
+const Q=[['Build 2 more houses',()=>cnt('house')>=3,60],['Reach 12 people',()=>pop()>=12,80],['Build 3 farms',()=>cnt('farm')>=3,80],['Upgrade your castle to Lv2',()=>S.lvl>=2,100],['Recruit 5 soldiers',()=>S.sold>=5,100],['Make a trade deal with a neighbor',()=>S.nb.some(n=>n.trade),120],['Research a technology',()=>Object.keys(S.res).length>0,120],['Win a battle',()=>S.wins>=1,150],['Reach 30 people',()=>pop()>=30,200],['Ally with a kingdom',()=>S.nb.some(n=>n.ally),250],['Reach Kingdom rank (50 people)',()=>pop()>=50,400],['Reach Empire rank (100 people)',()=>pop()>=100,0]];
+const =id=>document.getElementById(id),cv=('cv'),g=cv.getContext('2d');
+const rnd=(i,k)=>{const v=Math.sin(i*12.9898+k*78.233)*43758.5453;return v-Math.floor(v)};
+const nb=i=>{const x=i%W,y=(i/W)|0,a=[];if(x>0)a.push(i-1);if(x<W-1)a.push(i+1);if(y>0)a.push(i-W);if(y<H-1)a.push(i+W);return a};
+const isR=i=>MAP[i]==='r',nearR=i=>nb(i).some(isR);
+const pop=()=>S.peas+S.sold,cnt=k=>S.b.filter(x=>x===k).length;
+const housing=()=>S.lvl*5+cnt('house')*5+S.hb,cap=()=>3+cnt('barracks')*5,def=()=>Math.round((upow()+S.lvl*2+cnt('tower')*3+tradeDef())*(1+(S.rally>=0?.25:0)+(S.res.tact?.2:0)));
+const ss=()=>Math.floor(S.day/25)%4,light=()=>Math.max(0,Math.min(1,Math.sin(pp*6.2832)*1.4+.3)),dark=()=>1-light();
+const nOwn=()=>S.own.filter(Boolean).length,cost=i=>S.god||S.free?0:30+nOwn()*3+(MAP[i]==='m'?30:0),adjO=i=>nb(i).some(j=>S.own[j]);
+const upCost=()=>S.lvl===1?200:500;
+const prod=()=>(cnt('farm')*6+S.b.reduce((a,v,i)=>a+(v==='farm'&&nearR(i)?3:0),0)+cnt('dock')*8)*FM[ss()]*(S.res.crop?1.25:1)+tradeFood();
+const fnet=()=>prod()-S.peas*.5-S.sold;
+const canBuild=(k,i)=>S.own[i]&&!S.b[i]&&MAP[i]!=='r'&&(k==='mine'?MAP[i]==='m':MAP[i]!=='m')&&(k!=='dock'||nearR(i));
+function init(t){
+  const P=STARTS[t];MAP=gen(t);const cx=W>>1,cy=H>>1;CI=cy*W+cx;
+  S={gold:P.g,day:0,tax:10,peas:4,sold:0,food:P.f,hap:70,lvl:1,over:false,speed:1,dt:0,u:{spear:0,arch:0,knight:0},res:{},q:0,wins:0,rally:-1,nb:mkNb(),hb:0,peace:false,hapLock:false,god:false,free:false,own:Array(W*H).fill(false),b:Array(W*H).fill('')};
+  for(const [x,y] of [[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[0,1]])S.own[(cy+y)*W+cx+x]=true;
+  S.b[CI]='castle';S.b[CI-W]='house';S.b[CI+1]='farm';
+  cam.x=cx*64+32-320;cam.y=cy*64+32-224;$('start').style.display='none';
+  peasants=[];soldiers=[];R=null;rallyMode=false;tab='play';('tax').value=10;('log').innerHTML='';
+  log('Welcome, Your Majesty! Houses hold 5 people. Keep them fed and happy.');ui();
+}
+function log(m,c){const d=document.createElement('div');d.textContent='Day '+S.day+': '+m;if(c)d.className=c;$('log').prepend(d)}
+function clickTile(i){
+  if(S.over)return;const v=S.b[i];
+  if(rallyMode){if(S.own[i]&&MAP[i]!=='r'){S.rally=i;rallyMode=false;$('rally').textContent='🚩 Set rally point';log('🚩 Rally point set: soldiers gather here (+25% defense).','good');return ui()}return log('Pick one of your own tiles.','bad')}
+  if(MAP[i]==='r')return log('You can’t build on the river.','bad');
+  if(!S.own[i]){if(!adjO(i))return log('You can only buy land next to your borders.','bad');
+    if(S.gold<cost(i))return log('Not enough gold for land.','bad');S.gold-=cost(i);S.own[i]=true;log('You bought new land!','good');return ui()}
+  if(v==='castle')return log('Use the Upgrade button to grow your castle.');
+  if(v){S.gold+=B[v].c/2;S.b[i]='';log('Demolished a '+B[v].n+'.');return ui()}
+  const b=B[sel];
+  if(S.lvl<b.l)return log('Upgrade your castle to Lv'+b.l+' first.','bad');
+  if(sel==='mine'&&MAP[i]!=='m')return log('Mines need a mountain.','bad');
+  if(sel!=='mine'&&MAP[i]==='m')return log('Only mines can go on mountains.','bad');
+  if(sel==='dock'&&!nearR(i))return log('Docks must be beside the river.','bad');
+  if(S.gold<bc(sel))return log('Not enough gold.','bad');
+  S.gold-=bc(sel);S.b[i]=sel;ui();
+}
+function evt(){
+  const good=Math.random()<.5,r=Math.floor(Math.random()*4);let t;
+  if(good){t=[()=>{S.food=Math.min(250,S.food+60);S.gold+=80;return'🎉 Harvest festival! +60 food and +80 gold.'},
+    ()=>{S.gold+=150;return'🐪 A merchant caravan paid 150 gold in tribute.'},
+    ()=>{const n=Math.min(3,Math.max(0,housing()-pop()));S.peas+=n;return'💍 A royal wedding! '+n+' guests settled here.'},
+    ()=>{S.gold+=120;return'⛏️ Gold found in the hills! +120 gold.'}][r]()}
+  else{t=[()=>{const n=Math.max(1,Math.floor(S.peas*.2));S.peas-=Math.min(S.peas,n);return'☠️ Plague! Your people lost '+n+' souls.'},
+    ()=>{S.food=Math.floor(S.food/2);return'🌵 Drought! Half your food spoiled.'},
+    ()=>{const h=S.b.map((v,i)=>v==='house'?i:-1).filter(i=>i>=0);if(!h.length)return'🔥 A fire broke out but burned itself out.';S.b[h[Math.floor(Math.random()*h.length)]]='';return'🔥 A great fire destroyed a house!'},
+    ()=>{const str=10+Math.floor(S.day/5);if(def()>=str)return'⚔️ A warlord invaded ('+str+') but your defenses held!';const l=Math.floor(S.gold*.4);S.gold-=l;S.peas=Math.max(0,S.peas-3);return'⚔️ A warlord ('+str+') plundered '+l+' gold and killed 3 people!'}][r]()}
+  return {t,good}
+}
+function tick(){
+  S.day++;const sn=ss();if(S.god){S.gold=Math.max(S.gold,99999);S.food=250}
+  S.food=Math.min(250,S.food+fnet());let starve=false;
+  if(S.food<0){S.food=0;starve=true;if(S.peas>1&&Math.random()<.6){S.peas--;log('A starving family left. Build farms!','bad')}else log('Famine! Your people are starving.','bad')}
+  const wf=S.food>=pop()*4;
+  S.gold+=Math.round(S.peas*S.tax*.2)+cnt('market')*8+cnt('mine')*(S.res.iron?18:12)+tradeGold()+S.lvl*5-S.sold;
+  if(S.gold<0){S.gold=0;if(S.sold>0){lose(1);log('A soldier deserted: no pay!','bad')}}
+  S.hap=Math.max(0,Math.min(100,Math.round(90-S.tax*2.2-(starve?30:0)+(wf?6:0)+Math.min(16,cnt('tavern')*8)+(S.res.law?8:0)-(pop()>housing()?15:0))));
+  if(S.hapLock)S.hap=100;if(S.hap>55&&pop()<housing()&&Math.random()<(wf?.9:.65)+(sn===0?.1:0)){const n=Math.min(S.hap>75?2:1,housing()-pop());S.peas+=n;log(n+' newcomer'+(n>1?'s':'')+' joined'+(wf?' (drawn by your full granaries)':'')+'!','good')}
+  if(pop()>housing()&&S.peas>0){S.peas--;log('A family left: no homes. Build houses!','bad')}
+  if(S.hap<40&&S.peas>0&&Math.random()<.8){const n=Math.min(S.peas,S.hap<20?2:1);S.peas-=n;log(n+' peasant(s) left, angry at your rule!','bad')}
+  if(S.day%25===0)log(SEM[sn]+' '+SEAS[sn]+' has arrived.'+(sn===3?' Farms yield little in winter!':sn===2?' Bountiful harvests!':''));
+  if(S.day%7===0&&!R){if(Math.random()<Math.max(.05,.65-def()*.04))startBattle('Bandits',3+Math.floor(S.day/6)+Math.floor(Math.random()*3),null);else if(S.sold>=3&&Math.random()<.5)log('Bandit scouts saw your soldiers and turned back.','good')}
+  if(S.day%10===0&&!R){const h=S.nb.filter(n=>n.rel<-20&&!n.ally);if(h.length&&Math.random()<.5){const n=h[Math.floor(Math.random()*h.length)];startBattle(n.n+' army',Math.round(nbStr(n)*.8),n)}}
+  if(S.day%50===0){const e=evt();log('EVENT: '+e.t,e.good?'good':'bad')}
+  else if(Math.random()<.12)log(FLAV[Math.floor(Math.random()*FLAV.length)]);
+  if(pop()<=0){S.over=true;log('Your kingdom is empty. Game over!','bad')}
+  ui();
+}
+function lose(n){for(let k=0;k<n&&S.sold>0;k++){const t=['spear','arch','knight'].filter(x=>S.u[x]>0);S.u[t[Math.floor(Math.random()*t.length)]]--;S.sold--}}
+function recruit(t){const u=UT[t];if(S.over||S.gold<u.c||S.peas<1||S.sold>=cap()||(u.req&&!S.res[u.req]))return;S.gold-=u.c;S.peas--;S.sold++;S.u[t]++;log('A '+u.n+' joined your army.')}
+function rcUI(){$('rc').innerHTML=Object.entries(UT).map(([k,u])=>{const lk=u.req&&!S.res[u.req];return '<button class="b" data-act="rec" data-k="'+k+'"'+(lk||S.gold<u.c||S.peas<1||S.sold>=cap()||S.over?' disabled':'')+'>'+(lk?'🔒 ':'')+u.e+' '+u.n+' '+u.c+'g ('+S.u[k]+')</button>'}).join('')+'<small> '+S.sold+'/'+cap()+' soldiers</small><br>'}
+function syncS(){const o=ownedIdx();for(const t of Object.keys(UT)){const a=soldiers.filter(p=>p.k===t);while(a.length<S.u[t]){const i=S.rally>=0?S.rally:o[Math.floor(Math.random()*o.length)],p={x:(i%W)*64+32,y:((i/W)|0)*64+40,tx:0,ty:0,c:0,k:t,sold:1,jx:Math.random()*30-15,jy:Math.random()*20-5};soldiers.push(p);a.push(p)}while(a.length>S.u[t])soldiers.splice(soldiers.indexOf(a.pop()),1)}}
+function startBattle(who,str,nb){if(S.peace)return;
+ const c={b:0,s:0,r:0};for(let k=0;k<str;k++)c['bsr'[Math.floor(Math.random()*3)]]++;
+ let p=upow()+Math.min(S.u.spear,c.r)+Math.min(S.u.arch,c.b)*1.5+Math.min(S.u.knight,c.s)*2+S.lvl*2+cnt('tower')*3+tradeDef();
+ p*=1+(S.rally>=0?.25:0)+(S.res.tact?.2:0);const al=S.nb.filter(n=>n.ally).reduce((a,n)=>a+Math.floor(nbStr(n)/2),0);p+=al;
+ const tg=S.rally>=0?S.rally:CI,tx=(tg%W)*64+32,ty=((tg/W)|0)*64+40,side=Math.floor(Math.random()*4),ex=side<2?(side?W*64-20:20):Math.random()*W*64,ey=side<2?Math.random()*H*64:(side===2?20:H*64-20),en=[];
+ for(const t of 'bsr')for(let k=0;k<c[t]&&en.length<16;k++)en.push({x:ex+Math.random()*50-25,y:ey+Math.random()*50-25,t});
+ R={who,str,win:p>=str,nb,tx,ty,en,ph:0,tm:0};cam.x=tx-320;cam.y=ty-224;clampCam();
+ log('⚔️ '+who+' ('+str+') are marching on you: '+c.b+' Brutes, '+c.s+' Slingers, '+c.r+' Riders.'+(al?' Allies are helping.':'')+' Spearmen beat Riders, Archers beat Brutes, Knights beat Slingers.','bad')}
+function battle(dt){if(!R)return;R.tm+=dt;
+ if(R.ph===0){let near=0;for(const e of R.en){const d=Math.hypot(R.tx-e.x,R.ty-e.y);if(d>34){e.x+=(R.tx-e.x)/d*dt*.05;e.y+=(R.ty-e.y)/d*dt*.05}else near++}if(near>=R.en.length*.6){R.ph=1;R.tm=0}}
+ else if(R.tm>3500)endBattle()}
+function endBattle(){const r=R;R=null;
+ if(r.win){S.wins++;log('🏆 '+r.who+' ('+r.str+') were crushed!','good');if(r.nb)r.nb.rel=Math.max(-100,r.nb.rel-5);if(S.sold>0&&Math.random()<.3)lose(1)}
+ else{const l=Math.floor(S.gold*.3);S.gold-=l;const d=Math.min(S.peas,1+Math.floor(r.str/5));S.peas-=d;lose(Math.min(S.sold,1+Math.floor(S.sold/3)));log('💀 '+r.who+' broke through! Lost '+l+' gold, '+d+' people and some soldiers.','bad')}
+ ui()}
+function drawR(){for(const e of R.en){g.save();g.translate(e.x,e.y+Math.sin(tm*9+e.x)*1);ell(0,6,6,2,SH);if(e.t==='r'){ell(0,3,9,5,'#5a3a1e');ell(8,-1,3,3,'#5a3a1e')}rect(-3,-4,6,8,e.t==='b'?'#7a1f1f':e.t==='s'?'#6b4a2a':'#4a1f5a');ell(0,-7,3.5,3.5,'#c9a07a');if(e.t==='b')rect(5,-10,2,12,'#444');g.restore()}
+ if(R.ph===1)for(let k=0;k<6;k++){g.globalAlpha=.8;ell(R.tx+Math.sin(tm*13+k*2)*28,R.ty+Math.cos(tm*11+k)*18-8,3,3,k%2?'#ffd24a':'#fff');g.globalAlpha=1}}
+function runCode(s){s=s.trim().toUpperCase();const A={
+ RICH:()=>{S.gold+=10000;return'+10,000 gold'},
+ FEAST:()=>{S.food=250;return'Food store is full'},
+ POPULATE:()=>{S.peas+=10;S.hb+=10;return'+10 people with free homes'},
+ ARMY:()=>{S.u.knight+=10;S.sold+=10;return'+10 knights'},
+ BRAIN:()=>{for(const k in RS)S.res[k]=1;return'All research unlocked'},
+ CASTLE:()=>{S.lvl=3;return'Castle is Level 3'},
+ LAND:()=>{for(let i=0;i<W*H;i++)if(MAP[i]!=='r')S.own[i]=true;return'You own all the land'},
+ QUESTS:()=>{while(S.q<Q.length){S.gold+=Q[S.q][2];S.q++}return'All quests completed'},
+ ALLY:()=>{S.nb.forEach(n=>{n.rel=100;n.trade=true;n.ally=true});return'Allied and trading with everyone'},
+ PEACE:()=>{S.peace=!S.peace;return'Peace '+(S.peace?'ON (no raids)':'OFF')},
+ HAPPY:()=>{S.hapLock=!S.hapLock;return'Full happiness '+(S.hapLock?'ON':'OFF')},
+ FREE:()=>{S.free=!S.free;return'Free building and land '+(S.free?'ON':'OFF')},
+ SKIP:()=>{S.day+=10;return'Jumped 10 days ahead'},
+ SEASON:()=>{S.day+=25-S.day%25;return'Jumped to the next season'},
+ SUNRISE:()=>{S.dt=0;return'Sunrise'},
+ MIDNIGHT:()=>{S.dt=DAY*.75;return'Midnight'},
+ RAID:()=>{const p=S.peace;S.peace=false;if(!R)startBattle('Test raiders',5+Math.floor(S.day/6),null);S.peace=p;return'Raiders summoned'},
+ EVENT:()=>{const e=evt();log('EVENT: '+e.t,e.good?'good':'bad');return'Event triggered'},
+ GOD:()=>{S.god=true;S.peace=true;S.hapLock=true;for(const k of['RICH','FEAST','POPULATE','ARMY','BRAIN','CASTLE','LAND','ALLY','QUESTS'])A[k]();return'GOD MODE: everything unlocked, infinite gold and food, free building, peace and full happiness'}};
+ const CM={'4827':'RICH','3159':'FEAST','7281':'POPULATE','6034':'ARMY','9152':'BRAIN','2746':'CASTLE','8613':'LAND','5390':'QUESTS','1478':'ALLY','6925':'PEACE','3862':'HAPPY','7104':'FREE','2539':'SKIP','4981':'SEASON','8270':'SUNRISE','1356':'MIDNIGHT','9647':'RAID','5083':'EVENT','7391046':'GOD'},nm=CM[s];
+ if(nm){log('🔑 '+nm+': '+A[nm](),'good');$('codein').value='';ui()}else log('Unknown code.','bad')}
+function chk(){while(S.q<Q.length&&Q[S.q][1]()){S.gold+=Q[S.q][2];log('📜 Advisor: “'+Q[S.q][0]+'” complete! +'+Q[S.q][2]+' gold.','good');if(S.q===Q.length-1)log('👑 YOU BUILT AN EMPIRE! You win, Your Majesty!','good');S.q++}}
+function panels(){
+ document.querySelectorAll('.pn').forEach(p=>p.style.display=p.id==='p-'+tab?'block':'none');
+ $('tabs').innerHTML=[['play','🏰 Kingdom'],['dip','🤝 Neighbors'],['res','🔬 Research'],['quest','📜 Quests'],['info','📖 Info'],['code','🔑 Codes']].map(([k,t])=>'<button class="b'+(tab===k?' sel':'')+'" data-act="tab" data-k="'+k+'">'+t+'</button>').join('');
+ if(tab==='dip')$('p-dip').innerHTML=S.nb.map((n,i)=>'<div style="margin-bottom:8px"><b>'+n.e+' '+n.n+'</b> <small>'+n.d+'</small><br>Mood: '+(n.rel<-20?'😠 Hostile':n.rel<20?'😐 Neutral':n.rel<50?'🙂 Friendly':'😍 Loyal')+' ('+n.rel+') · Army '+nbStr(n)+(n.trade?' · 🤝 Trading':'')+(n.ally?' · 🛡️ Allied':'')+'<br><button class="b" data-act="gift" data-i="'+i+'">🎁 Gift 50g (+15)</button>'+(n.trade?'':'<button class="b" data-act="trade" data-i="'+i+'"'+(n.rel<20?' disabled':'')+'>Trade deal 80g (mood 20+)</button>')+(n.ally?'':'<button class="b" data-act="ally" data-i="'+i+'"'+(n.rel<50||!n.trade?' disabled':'')+'>Alliance 150g (mood 50+, trading)</button>')+'<button class="b" data-act="atk" data-i="'+i+'"'+(n.ally||S.sold<3?' disabled':'')+'>⚔️ Attack</button></div>').join('')+'<small>Allies help in battles. Hostile neighbors (mood below −20) may invade.</small>';
+ if(tab==='res')$('p-res').innerHTML=Object.entries(RS).map(([k,r])=>'<div style="margin-bottom:6px"><b>'+r.n+'</b> '+(S.res[k]?'✅':'')+'<br><small>'+r.d+'</small><br>'+(S.res[k]?'':'<button class="b" data-act="res" data-k="'+k+'"'+(S.gold<r.c||(r.req&&!S.res[r.req])?' disabled':'')+'>Research '+r.c+'g'+(r.req&&!S.res[r.req]?' (needs '+RS[r.req].n+')':'')+'</button>')+'</div>').join('');
+ if(tab==='quest')$('p-quest').innerHTML=S.q<Q.length?'<b>Advisor Aldric says:</b><br>“Your Majesty, '+Q[S.q][0].toLowerCase()+'.”<br>Reward: '+Q[S.q][2]+' gold<br><small>Quest '+(S.q+1)+' of '+Q.length+'</small>':'<b>👑 You built an empire! All quests complete.</b>'}
+function ui(){
+  chk();const sn=ss(),n=fnet();
+  $('rank').textContent='– '+(pop()>=100?'Empire':pop()>=50?'Kingdom':pop()>=20?'Town':'Village');
+  $('stats').innerHTML=[['💰 Gold',Math.floor(S.gold)],[SEM[sn]+' '+SEAS[sn],'Day '+S.day],['👥 People',pop()+'/'+housing()],['🌾 Food',Math.floor(S.food)+' ('+(n>=0?'+':'')+n.toFixed(1)+')'],['😊 Happy',S.hap+'%'],['⚔️ Defense',def()],['🎲 Event in',(50-S.day%50)+'d']].map(([a,b])=>'<div class="stat">'+a+'<b>'+b+'</b></div>').join('');
+  $('clv').textContent='Level '+S.lvl+' (houses '+S.lvl*5+', +'+S.lvl*2+' defense, +'+S.lvl*5+' gold/day)';
+  const u=$('up');u.textContent=S.lvl<3?'Upgrade to Lv'+(S.lvl+1)+' ('+upCost()+'g) unlocks '+UNL[S.lvl]:'Castle at max level';u.disabled=S.lvl>=3||S.gold<upCost()||S.over;
+  $('bb').innerHTML='';
+  for(const k in B){const b=document.createElement('button'),lk=S.lvl<B[k].l;b.className='b'+(sel===k?' sel':'');b.disabled=lk;b.title=B[k].note;
+    b.textContent=lk?'🔒 '+B[k].n+' (Castle Lv'+B[k].l+')':EM[k]+' '+B[k].n+' '+bc(k)+'g';b.onclick=()=>{sel=k;ui()};$('bb').appendChild(b)}
+  $('taxv').textContent=S.tax;
+  rcUI();
+  $('sell').disabled=S.over||S.food<30;
+  sync(peasants,Math.min(S.peas,40),0);syncS();panels();
+}
+const ownedIdx=()=>{const a=[];S.own.forEach((v,i)=>{if(v&&MAP[i]!=='m')a.push(i)});return a};
+function sync(arr,n,sold){const o=ownedIdx();
+  while(arr.length<n){const i=o[Math.floor(Math.random()*o.length)];arr.push({x:(i%W)*64+32,y:((i/W)|0)*64+40,tx:0,ty:0,c:Math.floor(Math.random()*4),sold})}
+  while(arr.length>n)arr.pop()}
+/* ---------- drawing ---------- */
+function ell(x,y,rx,ry,c){g.fillStyle=c;g.beginPath();g.ellipse(x,y,rx,ry,0,0,7);g.fill()}
+function rect(x,y,w,h,c){g.fillStyle=c;g.fillRect(x,y,w,h)}
+function poly(p,c){g.fillStyle=c;g.beginPath();p.forEach(([x,y],k)=>k?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fill()}
+const fog=()=>rect(0,0,64,64,'rgba(15,25,35,.45)');
+function smoke(x,y){for(let k=0;k<3;k++){const p=(tm*.6+k/3)%1;g.globalAlpha=.5*(1-p);ell(x+p*6,y-p*18,3+p*4,3+p*4,'#ddd');g.globalAlpha=1}}
+function tree(x,y,s){const c=TC[ss()];rect(x-2*s,y,4*s,9*s,'#5a3a1e');ell(x,y-2*s,10*s,9*s,c[0]);ell(x-3*s,y-5*s,7*s,6*s,c[1]);ell(x+4*s,y-3*s,6*s,5*s,c[0])}
+function grass(i){const c=GC[ss()];rect(0,0,64,64,rnd(i,1)>.5?c[0]:c[1]);
+  for(let k=0;k<6;k++){const x=rnd(i,k+2)*60+2,y=rnd(i,k+9)*60+2;g.strokeStyle=ss()===3?'#b9ccd6':'#5ea63e';g.lineWidth=1.5;g.beginPath();g.moveTo(x,y);g.lineTo(x-1,y-4);g.moveTo(x,y);g.lineTo(x+2,y-3);g.stroke()}
+  if(ss()<2&&rnd(i,30)>.55)ell(rnd(i,31)*50+6,rnd(i,32)*50+6,2,2,rnd(i,33)>.5?'#ffe45a':'#fff')}
+function forest(i){rect(0,0,64,64,ss()===3?'#9db7a7':'#3d6b35');for(let k=0;k<4;k++)tree(rnd(i,k)*48+8,rnd(i,k+5)*36+18,.9+rnd(i,k+8)*.5)}
+function mount(i,own){rect(0,0,64,64,own?'#8d8a7e':'#5d6b58');poly([[0,62],[20,14],[42,62]],'#7b8089');poly([[22,62],[44,8],[64,62]],'#6f747d');poly([[20,14],[14,28],[26,28]],'#f2f6f8');poly([[44,8],[37,24],[51,24]],'#f2f6f8')}
+function water(i){const fr=ss()===3;rect(0,0,64,64,fr?'#cfe6f2':'#3b86c4');g.strokeStyle=fr?'#fff':'#7fc0ea';g.lineWidth=2;
+  for(let k=0;k<3;k++){const y=(tm*14+k*22+rnd(i,k)*40)%64;g.beginPath();g.moveTo(8+k*16,y);g.quadraticCurveTo(18+k*16,y-3,28+k*16,y);g.stroke()}
+  const x=i%W,y=(i/W)|0,e='#d9c48a';
+  if(x>0&&!isR(i-1))rect(0,0,5,64,e);if(x<W-1&&!isR(i+1))rect(59,0,5,64,e);if(y>0&&!isR(i-W))rect(0,0,64,5,e);if(y<H-1&&!isR(i+W))rect(0,59,64,5,e)}
+function house(){ell(32,57,26,5,SH);rect(12,30,40,26,'#efe0bb');rect(12,53,40,3,'#c4b080');rect(14,30,3,26,'#8a6a3c');rect(47,30,3,26,'#8a6a3c');rect(43,12,7,14,'#9c9388');
+  poly([[6,33],[32,9],[58,33]],'#b5442f');poly([[6,33],[32,9],[32,14],[13,33]],'#c9573f');rect(27,40,11,16,'#6b4423');rect(16,38,8,8,'#9fd3e8');smoke(46,9)}
+function farm(){rect(3,6,58,54,'#5e3b1f');rect(3,6,58,3,'#8a6a3c');rect(3,57,58,3,'#8a6a3c');const hc=['#9bd24a','#e8b923','#d98a1a','#e8f0f4'][ss()];
+  for(let r=0;r<4;r++){const y=14+r*11;rect(6,y+6,52,3,'#46280f');
+    for(let c=0;c<6;c++){const x=10+c*9,s=Math.sin(tm*2+c+r)*1.5;g.strokeStyle=ss()===3?'#9fb5a8':'#4f9a35';g.lineWidth=2;g.beginPath();g.moveTo(x,y+7);g.lineTo(x+s,y-3);g.stroke();ell(x+s,y-4,2,4,hc)}}
+  for(let k=0;k<5;k++)rect(3+k*13,3,3,8,'#7a5a30')}
+function barracks(){ell(32,58,28,5,SH);rect(10,24,44,34,'#9aa0a8');
+  for(let r=0;r<5;r++)for(let c=0;c<6;c++)rect(11+c*7+(r%2)*3,26+r*6,5,1,'#7d838b');
+  for(const x of[4,46]){rect(x,14,14,44,'#868c95');for(let k=0;k<3;k++)rect(x+k*5,10,4,5,'#868c95')}
+  rect(25,38,14,20,'#4a3220');ell(32,38,7,7,'#4a3220');rect(31,0,2,22,'#5a3a1e');poly([[33,2],[46+Math.sin(tm*5)*2,5],[33,10]],'#c8352b')}
+function market(){ell(32,57,28,5,SH);rect(10,36,44,20,'#8a5a2c');rect(8,18,2,38,'#6b4423');rect(54,18,2,38,'#6b4423');
+  for(let k=0;k<6;k++)rect(8+k*8,16,8,16,k%2?'#fff':'#c8352b');ell(20,36,4,3,'#e04a3a');ell(32,36,4,3,'#f2c230');ell(44,36,4,3,'#6cbf3f');rect(14,46,10,8,'#a67c4a');rect(40,46,10,8,'#a67c4a')}
+function tavern(){ell(32,57,28,5,SH);rect(10,22,44,34,'#a8754a');rect(10,38,44,2,'#7a5230');poly([[5,24],[32,3],[59,24]],'#6b3a22');
+  rect(27,40,10,16,'#4a2a14');rect(14,30,8,8,'#e8c070');rect(42,30,8,8,'#e8c070');rect(52,28,8,6,'#e8c070');rect(8,10,6,12,'#9c9388');smoke(11,8)}
+function tower(){ell(32,59,18,4,SH);rect(22,16,20,42,'#9aa0a8');for(let r=0;r<6;r++)rect(23,20+r*6,18,1,'#7d838b');
+  rect(20,12,24,5,'#868c95');poly([[18,14],[32,-4],[46,14]],'#2f5fa8');rect(30,28,4,10,'#2a2d33');rect(30,44,4,12,'#4a3220');poly([[32,-4],[44+Math.sin(tm*5)*2,0],[32,5]],'#e8b923')}
+function mine(){rect(22,36,20,22,'#2a2218');rect(20,34,24,4,'#7a5a30');rect(20,34,3,24,'#7a5a30');rect(41,34,3,24,'#7a5a30');
+  rect(44,48,14,8,'#6b6b6b');ell(48,57,3,3,'#222');ell(55,57,3,3,'#222');ell(51,47,5,3,'#ffd24a')}
+function dock(i){const d=nb(i).find(isR);let a=0;if(d!==undefined)a=Math.atan2(Math.sign(((d/W)|0)-((i/W)|0)),Math.sign(d%W-i%W));
+  rect(8,8,22,22,'#8a6a3c');poly([[4,10],[19,0],[34,10]],'#5a3a1e');
+  g.save();g.translate(32,32);g.rotate(a);rect(0,-6,34,12,'#9b7442');for(let k=0;k<6;k++)rect(k*6,-6,1,12,'#6b4a28');ell(24,0,6,3,'#4a2a14');rect(2,-8,3,3,'#5a3a1e');g.restore()}
+function castle(l){ell(32,59,31,5,SH);const sc='#aab0b9',dk='#8b909a';
+  if(l>=2)for(const x of[1,49]){rect(x,22,14,38,dk);for(let k=0;k<3;k++)rect(x+k*5,18,4,5,dk);rect(x+5,32,4,9,'#2a2d33')}
+  if(l>=2)rect(10,40,44,20,dk);
+  rect(18,24,28,36,sc);for(let k=0;k<4;k++)rect(18+k*8,19,5,6,sc);
+  for(let r=0;r<6;r++)rect(19,28+r*5,26,1,'#8b909a');
+  rect(26,40,12,20,'#4a3220');ell(32,40,6,6,'#4a3220');
+  if(l>=3){rect(23,4,18,22,sc);for(let k=0;k<3;k++)rect(23+k*7,0,4,5,sc);poly([[21,6],[32,-8],[43,6]],'#2b5fc8')}
+  const fy=l>=3?-8:19;rect(31,fy-14,2,16,'#5a3a1e');poly([[33,fy-14],[45+Math.sin(tm*5)*2,fy-10],[33,fy-6]],['#c8352b','#2b5fc8','#e8b923'][l-1])}
+function building(k,i){({house,farm,barracks,market,mine,dock,tavern,tower,castle:()=>castle(S.lvl)})[k](i)}
+function person(p){g.save();g.translate(p.x,p.y+Math.sin(tm*8+p.x)*1);g.scale(.9,.9);ell(0,6,5,2,SH);
+  if(p.sold){rect(-3,-2,6,8,p.k==='arch'?'#2f7d32':p.k==='knight'?'#2b5fc8':'#b02a2a');ell(0,-5,3.5,3.5,'#e9c9a0');g.fillStyle=p.k==='knight'?'#dfe4ea':'#8c939c';g.beginPath();g.arc(0,-6,4,Math.PI,0);g.fill();if(p.k==='arch'){g.strokeStyle='#6b4423';g.lineWidth=1.5;g.beginPath();g.arc(6,-2,6,-1.2,1.2);g.stroke()}else if(p.k==='knight'){rect(-7,-2,4,7,'#2b5fc8');rect(5,-10,1.5,14,'#ddd')}else{rect(5,-12,1.5,18,'#6b4423');poly([[5,-12],[8,-8],[3,-8]],'#ddd')}}
+  else{rect(-3,-2,6,8,['#3f6fb5','#a0622d','#7a4fa3','#c9a227'][p.c]);ell(0,-5,3.5,3.5,'#f0cfa5')}g.restore()}
+const LT={house:[[20,42]],tavern:[[18,34],[46,34]],castle:[[32,34]]};
+function draw(){
+  g.clearRect(0,0,640,448);
+  const x0=Math.max(0,Math.floor(cam.x/64)),x1=Math.min(W-1,Math.floor((cam.x+639)/64)),y0=Math.max(0,Math.floor(cam.y/64)),y1=Math.min(H-1,Math.floor((cam.y+447)/64));
+  for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){
+    const i=ty*W+tx,x=tx*64-cam.x,y=ty*64-cam.y,m=MAP[i],o=S.own[i],v=S.b[i],near=adjO(i);
+    g.save();g.translate(x,y);g.beginPath();g.rect(0,0,64,64);g.clip();
+    if(m==='r')water(i);else if(m==='m')mount(i,o);else if(m==='f'&&!o)forest(i);else grass(i);
+    if(!o&&m!=='r'){if(m==='g')rect(0,0,64,64,'rgba(60,40,20,.28)');if(!near)fog()}
+    if(v)building(v,i);
+    if(i===S.rally){rect(30,8,2,34,'#5a3a1e');poly([[32,8],[50+Math.sin(tm*5)*2,14],[32,22]],'#e8352b')}
+    if(i===hover&&!S.over){if(!v&&canBuild(sel,i)&&S.lvl>=B[sel].l){g.globalAlpha=.55;building(sel,i);g.globalAlpha=1}g.strokeStyle='#fff7b0';g.lineWidth=3;g.strokeRect(1.5,1.5,61,61)}
+    if(!o&&near&&m!=='r'){g.fillStyle='rgba(0,0,0,.6)';g.fillRect(8,24,48,16);g.fillStyle=S.gold>=cost(i)?'#ffe45a':'#ff8a80';g.font='bold 11px Georgia';g.textAlign='center';g.fillText('💰 '+cost(i)+'g',32,36)}
+    g.restore();
+  }
+  const o=ownedIdx();g.save();g.translate(-cam.x,-cam.y);
+  for(const p of [...peasants,...soldiers].sort((a,b)=>a.y-b.y)){
+    if(p.k&&(R||S.rally>=0)){const tg=S.rally;p.tx=(R?R.tx:(tg%W)*64+32)+p.jx;p.ty=(R?R.ty:((tg/W)|0)*64+40)+p.jy}
+    if(!p.tx||Math.hypot(p.tx-p.x,p.ty-p.y)<2){const i=o[Math.floor(Math.random()*o.length)];p.tx=(i%W)*64+10+Math.random()*44;p.ty=((i/W)|0)*64+30+Math.random()*30}
+    const d=Math.hypot(p.tx-p.x,p.ty-p.y)||1;p.x+=(p.tx-p.x)/d*.3*S.speed;const sp=(R&&p.k?.9:.3)*S.speed;p.x+=(p.tx-p.x)/d*sp;p.y+=(p.ty-p.y)/d*sp;person(p)}if(R)drawR();g.restore();
+  for(let k=0;k<3;k++)ell(((tm*9+k*260)%900)-130,70+k*130,70,26,'rgba(0,0,0,.07)');
+  const PC=['#ffc9dd',null,'#e0802a','#ffffff'][ss()];
+  if(PC)for(let k=0;k<40;k++){g.fillStyle=PC;g.fillRect((k*97+Math.sin(tm+k)*12+640)%640,(tm*(ss()===3?35:22)+k*53)%448,2.5,2.5)}
+  const dk=dark();
+  g.fillStyle='rgba(12,18,60,'+dk*.62+')';g.fillRect(0,0,640,448);
+  if(dk>.3){
+    S.b.forEach((v,i)=>{if(LT[v])for(const [lx,ly] of LT[v]){const x=(i%W)*64+lx-cam.x,y=((i/W)|0)*64+ly-cam.y;g.globalAlpha=dk*.3;ell(x,y,16,16,'#ffb347');g.globalAlpha=dk;ell(x,y,4,4,'#ffd27a');g.globalAlpha=1}});
+    if(ss()===1)for(let k=0;k<14;k++){g.globalAlpha=dk*(.5+.5*Math.sin(tm*3+k));ell((k*83+Math.sin(tm*.7+k)*20+640)%640,(k*61+Math.cos(tm*.5+k)*20+448)%448,2,2,'#e8ff7a');g.globalAlpha=1}}
+  g.globalAlpha=.85;for(let i=0;i<W*H;i++){const c=MAP[i];g.fillStyle=S.b[i]?'#f2c230':S.own[i]?'#5cc24a':c==='r'?'#3b86c4':c==='m'?'#8a8f99':c==='f'?'#2d5a2a':'#6aa84f';g.fillRect(526+(i%W)*4,358+((i/W)|0)*4,4,4)}
+  g.globalAlpha=1;g.strokeStyle='#fff';g.lineWidth=1.5;g.strokeRect(526+cam.x/16,358+cam.y/16,40,28);
+  g.fillStyle='#fff';g.font='18px Georgia';g.textAlign='left';g.fillText(dk>.5?'🌙':'☀️',8,22);
+  if(S.over){g.fillStyle='rgba(0,0,0,.6)';g.fillRect(0,0,640,448);g.fillStyle='#fff';g.font='bold 34px Georgia';g.textAlign='center';g.fillText('The kingdom has fallen',320,224)}
+}
+function info(i){if(i<0)return'Hover over the map. Tap to build, buy land or demolish.';const v=S.b[i];
+  if(MAP[i]==='r')return'River: you can’t build here, but farms and docks beside it do better.';
+  if(!S.own[i])return(MAP[i]==='f'?'Forest':MAP[i]==='m'?'Mountain':'Wild meadow')+(adjO(i)?': click to buy for '+cost(i)+'g':': too far away to buy yet');
+  if(v==='castle')return'Castle Lv'+S.lvl+': houses '+S.lvl*5+', +'+S.lvl*2+' defense, +'+S.lvl*5+' gold/day.';
+  if(v)return B[v].n+': '+B[v].note+' (click to demolish)';
+  return MAP[i]==='m'?'Mountain: build a Mine here.':'Empty land: click to build a '+B[sel].n+'.'}
+function frame(ts){const dt=Math.min(100,ts-last);last=ts;tm=ts/1000;if(!S){requestAnimationFrame(frame);return}
+  if(!paused&&!S.over){S.dt+=dt*S.speed;while(S.dt>=DAY){S.dt-=DAY;tick()}}
+  pp=S.dt/DAY;if(!paused&&!S.over)battle(dt*S.speed);draw();requestAnimationFrame(frame)}
+function tileAt(e){const r=cv.getBoundingClientRect(),x=Math.floor(((e.clientX-r.left)/r.width*640+cam.x)/64),y=Math.floor(((e.clientY-r.top)/r.height*448+cam.y)/64);return x<0||y<0||x>=W||y>=H?-1:y*W+x}
+const clampCam=()=>{cam.x=Math.max(0,Math.min(W*64-640,cam.x));cam.y=Math.max(0,Math.min(H*64-448,cam.y))};
+let dn=null,drag=false;
+cv.onpointerdown=e=>{dn={x:e.clientX,y:e.clientY,cx:cam.x,cy:cam.y};drag=false;cv.setPointerCapture(e.pointerId)};
+cv.onpointermove=e=>{if(dn){const k=640/cv.getBoundingClientRect().width,dx=e.clientX-dn.x,dy=e.clientY-dn.y;if(drag||Math.hypot(dx,dy)>6){drag=true;cam.x=dn.cx-dx*k;cam.y=dn.cy-dy*k;clampCam()}}else{hover=tileAt(e);if(S)$('info').textContent=info(hover)}};
+cv.onpointerup=e=>{if(dn&&!drag&&S){const i=tileAt(e);hover=i;if(i>=0){clickTile(i);$('info').textContent=info(i)}}dn=null};
+cv.onpointerleave=()=>{hover=-1};
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;const k=e.key.toLowerCase(),d=64;if(k==='arrowleft'||k==='a')cam.x-=d;else if(k==='arrowright'||k==='d')cam.x+=d;else if(k==='arrowup'||k==='w')cam.y-=d;else if(k==='arrowdown'||k==='s')cam.y+=d;else return;clampCam();e.preventDefault()});
+$('tax').oninput=e=>{S.tax=+e.target.value;ui()};
+$('up').onclick=()=>{if(S.lvl<3&&S.gold>=upCost()){S.gold-=upCost();S.lvl++;log('👑 Your castle is now Level '+S.lvl+'! Unlocked: '+UNL[S.lvl-1]+'.','good');ui()}};
+$('codein').onkeydown=e=>{if(e.key==='Enter')runCode($('codein').value)};
+$('rally').onclick=()=>{rallyMode=!rallyMode;$('rally').textContent=rallyMode?'Click one of your tiles…':'🚩 Set rally point'};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||!S)return;const a=b.dataset.act,k=b.dataset.k,n=S.nb[+b.dataset.i];
+ if(a==='tab'){tab=k;return panels()}
+ if(a==='code')return runCode($('codein').value);
+ if(a==='rec')recruit(k);
+ else if(a==='gift'&&S.gold>=50){S.gold-=50;n.rel=Math.min(100,n.rel+15);log('You sent a gift to '+n.n+'.')}
+ else if(a==='trade'&&S.gold>=80&&n.rel>=20){S.gold-=80;n.trade=true;log('🤝 Trade deal signed with '+n.n+'!','good')}
+ else if(a==='ally'&&S.gold>=150&&n.rel>=50&&n.trade){S.gold-=150;n.ally=true;log('🛡️ You allied with '+n.n+'!','good')}
+ else if(a==='atk'&&S.sold>=3&&!n.ally){const mine=upow()*(1+(S.res.tact?.2:0)),th=nbStr(n)*(.8+Math.random()*.4);n.trade=false;
+  if(mine>=th){const l=80+S.day*2;S.gold+=l;n.rel=Math.max(-100,n.rel-40);log('⚔️ Victory over '+n.n+'! You looted '+l+' gold.','good');lose(Math.floor(S.sold/5))}
+  else{n.rel=Math.max(-100,n.rel-20);lose(Math.ceil(S.sold/2));log('💀 Your attack on '+n.n+' failed and half your army fell.','bad')}}
+ else if(a==='res'){const r=RS[k];if(S.gold>=r.c&&!S.res[k]&&(!r.req||S.res[r.req])){S.gold-=r.c;S.res[k]=1;log('🔬 Researched '+r.n+'!','good')}}
+ ui()});
+$('sell').onclick=()=>{if(S.food>=30){S.food-=30;S.gold+=20;log('Sold 30 food for 20 gold.');ui()}};
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>S.speed=+b.dataset.s);
+$('pause').onclick=e=>{paused=!paused;e.target.textContent=paused?'Resume':'Pause'};
+$('restart').onclick=()=>{$('start').style.display='flex'};
+$('opts').innerHTML=Object.entries(STARTS).map(([k,v])=>'<button class="b" style="display:block;width:100%;text-align:left;margin:6px 0" data-k="'+k+'"><b>'+v.n+'</b><br><small>'+v.d+' Start: '+v.g+'g</small></button>').join('');
+document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>init(b.dataset.k));
+requestAnimationFrame(frame);
+</script></body></html>
+
