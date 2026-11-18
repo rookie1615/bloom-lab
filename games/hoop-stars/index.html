@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Hoop Stars</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e9edf5;--card:#fff;--ink:#0e1626;--mut:#5a6578;--acc:#e8541c;--wood:#c98a3c;--line:#d3dae6;--good:#1c8a4a;--bad:#c4302b;--board:#0e1626;--boardink:#ffd36b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1220;--card:#162137;--ink:#eef2f9;--mut:#93a0b8;--line:#26344f;--wood:#e0a458;--good:#4fd18b;--bad:#ff7b72;--board:#050912}}
+:root[data-theme="dark"]{--bg:#0b1220;--card:#162137;--ink:#eef2f9;--mut:#93a0b8;--line:#26344f;--wood:#e0a458;--good:#4fd18b;--bad:#ff7b72;--board:#050912}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Barlow,system-ui,sans-serif}
+h1,h2,.num{font-family:Teko,Impact,sans-serif;font-weight:700;margin:0;letter-spacing:.02em}
+.wrap{max-width:760px;margin:0 auto;padding:12px}
+.top{background:var(--board);color:#fff;border-radius:14px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:4px solid var(--wood)}
+.top h2{font-size:30px;line-height:1}.top small{color:#9fb0cc}
+.stat{text-align:right}.stat .num{font-size:30px;color:var(--boardink);line-height:1}
+nav{display:flex;gap:6px;margin:12px 0}nav button{flex:1;padding:10px 4px;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font:600 15px Barlow,sans-serif;cursor:pointer}
+nav button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line)}.row:first-child{border-top:0}
+.row b{display:block}.row span{color:var(--mut);font-size:14px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:10px 16px;font:600 15px Barlow,sans-serif;cursor:pointer;white-space:nowrap}
+button.btn:disabled{background:var(--line);color:var(--mut);cursor:not-allowed}
+button.btn.big{width:100%;font-size:19px;padding:14px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--wood);outline-offset:2px}
+.ovr{font-family:Teko,sans-serif;font-size:30px;font-weight:700;min-width:44px;text-align:center;color:var(--acc)}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:4px;width:120px}.bar i{display:block;height:100%;background:var(--wood)}
+.board{background:var(--board);color:#fff;border-radius:14px;padding:16px;text-align:center}
+.board table{margin:8px auto;border-collapse:collapse;width:100%;max-width:420px;color:#cfd9ea}.board td,.board th{padding:4px 8px;text-align:center}.board th{font-weight:400;color:#7f90ad}
+.board td:first-child,.board th:first-child{text-align:left}
+.score{font-family:Teko,sans-serif;font-size:64px;line-height:1;color:var(--boardink)}
+.win{color:var(--good)}.lose{color:var(--bad)}
+.start{max-width:440px;margin:12vh auto;text-align:center}
+.start h1{font-size:76px;line-height:.9;color:var(--acc)}.start p{color:var(--mut)}
+input{width:100%;padding:14px;font:600 18px Barlow,sans-serif;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);margin:10px 0}
+.pill{display:inline-block;background:var(--line);border-radius:20px;padding:2px 10px;font-size:13px;margin-left:6px}
+.tag{color:var(--mut);font-size:14px}
+@keyframes sw{from{left:0}to{left:calc(100% - 24px)}}
+</style></head><body><div class="wrap" id="app"></div>
+<script>
+const $=s=>document.querySelector(s),R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const FN=['Marcus','Jalen','Tyrese','Devin','Cole','Andre','Malik','Trey','Darius','Eli','Reggie','Omar','Nico','Zion','Cam','Jamal','Boone','Kai'];
+const LN=['Brooks','Walker','Reyes','Hayes','Okafor','Dunn','Pierce','Vance','Cruz','Mercer','Stone','Bell','Ford','Nash','Lopez','Grant','Cole','Banks'];
+const POS=['PG','SG','SF','PF','C'];
+const CITY=['Harbor','Summit','Desert','Capital','Valley','Metro','Lakeside','Bayview','Ironworks','Prairie'];
+const MASC=['Hawks','Titans','Comets','Bears','Rockets','Wolves','Knights','Storm','Jets','Kings'];
+const GAMES=20;
+let S=null,tab='play',last=null,msg='';
+const pname=()=>FN[R(0,FN.length-1)]+' '+LN[R(0,LN.length-1)];
+const price=o=>Math.round((o-35)**2*4);
+const mk=(lo,hi,pos)=>{const o=R(lo,hi);return{n:pname(),pos:pos||POS[R(0,4)],ovr:o}};
+const tcost=l=>Math.round(250*(l+1)**1.6),acost=l=>Math.round(600*(l+1)**1.7);
+function save(){try{localStorage.setItem('hoopstars',JSON.stringify(S))}catch(e){}}
+function load(){try{const v=localStorage.getItem('hoopstars');return v?JSON.parse(v):null}catch(e){return null}}
+function newGame(name){S={name,money:300,season:1,game:0,w:0,l:0,tw:0,tl:0,titles:0,train:{off:0,def:0,cond:0},arena:0,
+ players:POS.map(p=>mk(36,44,p)),market:[],opp:null};refresh();save();render()}
+function refresh(){const base=40+S.season*6+S.game;S.market=Array.from({length:6},()=>mk(Math.min(88,base-4),Math.min(92,base+14)));
+ S.opp={n:CITY[R(0,9)]+' '+MASC[R(0,9)],r:46+(S.season-1)*8+S.game*.6+R(-5,5)}}
+const rating=()=>S.players.reduce((a,p)=>a+p.ovr,0)/5+(S.train.off+S.train.def+S.train.cond)*1.2;
+const gauss=()=>(Math.random()+Math.random()+Math.random()-1.5)*2;
+const income=win=>Math.round((120+S.arena*55+(win?200:0))*(1+(S.season-1)*.25));
+function play(){if(!S.ready)return;S.ready=false;wnote='';CH=null;
+ const mine=78+(rating()-50)*.55+gauss()*7,theirs=78+(S.opp.r-50)*.55+gauss()*7;
+ let a=Math.round(mine),b=Math.round(theirs),q=[];
+ let ot=false;while(a===b){a+=R(0,4);b+=R(0,4);ot=true}
+ const split=t=>{let x=[0,0,0,0],r=t;for(let i=0;i<3;i++){x[i]=Math.round(t/4)+R(-3,3);r-=x[i]}x[3]=r;return x};
+ const qa=split(a),qb=split(b),win=a>b,pay=income(win);
+ last={opp:S.opp.n,a,b,qa,qb,win,pay,ot};
+ S.money+=pay;S.game++;win?(S.w++,S.tw++):(S.l++,S.tl++);msg='';
+ if(S.game>=GAMES)endSeason();else refresh();
+ save();render()}
+function endSeason(){
+ const champ=S.w>=13,bonus=S.w*100+(champ?2500:0)*S.season;
+ S.money+=bonus;if(champ)S.titles++;
+ last.season={w:S.w,l:S.l,champ,bonus,n:S.season};
+ S.season++;S.game=0;S.w=0;S.l=0;refresh()}
+function buy(i){const p=S.market[i],worst=S.players.reduce((m,x,j)=>x.ovr<S.players[m].ovr?j:m,0),old=S.players[worst];
+ if(S.money<price(p.ovr)||p.ovr<=old.ovr)return;
+ const back=Math.round(price(old.ovr)*.4);S.money-=price(p.ovr)-back;S.players[worst]=p;S.market.splice(i,1);
+ msg=`Signed ${p.n} (${p.ovr}). ${old.n} traded for $${back.toLocaleString()}.`;save();render()}
+function up(k){const cost=k==='arena'?acost(S.arena):tcost(S.train[k]),lv=k==='arena'?S.arena:S.train[k];
+ if(S.money<cost||lv>=10)return;S.money-=cost;k==='arena'?S.arena++:S.train[k]++;save();render()}
+const $m=n=>'$'+n.toLocaleString();
+function head(){return`<div class="top"><div><h2>${S.name.replace(/</g,'&lt;')}</h2><small>Season ${S.season} · Game ${Math.min(S.game+1,GAMES)} of ${GAMES}</small></div>
+<div class="stat"><div class="num">${$m(S.money)}</div><small>Record ${S.w}-${S.l} · Team rating ${Math.round(rating())}</small></div></div>
+<nav>${[['play','Play'],['roster','Roster'],['market','Sign players'],['up','Upgrades']].map(([k,l])=>`<button class="${tab===k?'on':''}" onclick="tab='${k}';render()">${l}</button>`).join('')}</nav>`}
+function playTab(){
+ let h='';
+ if(last){const L=last;h+=`<div class="board"><div class="tag" style="color:#9fb0cc">Final${L.ot?' (OT)':''} vs ${L.opp}</div>
+ <div class="score">${L.a} – ${L.b}</div><div class="${L.win?'win':'lose'}" style="font-weight:600">${L.win?'Win':'Loss'} · earned ${$m(L.pay)}</div>
+ <table><tr><th></th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th></tr><tr><td>${S.name.replace(/</g,'&lt;')}</td>${L.qa.map(x=>`<td>${x}</td>`).join('')}</tr><tr><td>${L.opp}</td>${L.qb.map(x=>`<td>${x}</td>`).join('')}</tr></table></div>`;
+  if(L.season){const s=L.season;h+=`<div class="card"><h2>Season ${s.n} complete: ${s.w}-${s.l}</h2><p>${s.champ?'You won the title! ':'You missed the title (13 wins needed). '}Season bonus: <b>${$m(s.bonus)}</b>. Opponents are tougher in season ${s.n+1}, but crowds pay more.</p></div>`}}
+ h+=`<div class="card" style="margin-top:12px"><h2>Next game: ${S.opp.n}</h2><p class="tag">Opponent rating ${Math.round(S.opp.r)} · your rating ${Math.round(rating())}. Win payout ${$m(income(true))}, loss ${$m(income(false))}.</p>
+ ${S.ready?`<button class="btn big" onclick="play()">Play game ${S.game+1}</button>`:`<button class="btn big" disabled>Locked: clear a warm-up first</button>`}</div>${wnote?`<div class="card ${S.ready?'win':'lose'}">${wnote}</div>`:''}${S.ready?'':warmup()}
+ <div class="card tag">Career: ${S.tw}-${S.tl} · Titles: ${S.titles}</div>`;return h}
+function rosterTab(){return`<div class="card">${S.players.slice().sort((a,b)=>b.ovr-a.ovr).map(p=>`<div class="row"><div><b>${p.n}<span class="pill">${p.pos}</span></b><div class="bar"><i style="width:${p.ovr}%"></i></div></div><div class="ovr">${p.ovr}</div></div>`).join('')}</div>
+<p class="tag">Training adds +${((S.train.off+S.train.def+S.train.cond)*1.2).toFixed(1)} to team rating.</p>`}
+function marketTab(){const worst=Math.min(...S.players.map(p=>p.ovr));
+ return`${msg?`<div class="card win">${msg}</div>`:''}<p class="tag">A new player replaces your weakest (${worst}) and you get 40% of his value back. New faces appear after every game.</p><div class="card">${S.market.length?S.market.map((p,i)=>{const c=price(p.ovr),ok=S.money>=c&&p.ovr>worst;
+ return`<div class="row"><div><b>${p.n}<span class="pill">${p.pos}</span></b><span>Rating ${p.ovr} · ${$m(c)}</span></div><button class="btn" ${ok?'':'disabled'} onclick="buy(${i})">${p.ovr<=worst?'Not an upgrade':S.money<c?'Need '+$m(c-S.money):'Sign'}</button></div>`}).join(''):'<p>Sold out. Play a game to see new players.</p>'}</div>`}
+function upTab(){const it=[['off','Shooting drills','+1.2 team rating per level',S.train.off],['def','Defense drills','+1.2 team rating per level',S.train.def],['cond','Conditioning','+1.2 team rating per level',S.train.cond],['arena','Arena','More fans: +$55 per game per level, seats '+(500+S.arena*900).toLocaleString(),S.arena]];
+ return`<div class="card">${it.map(([k,n,d,l])=>{const c=k==='arena'?acost(l):tcost(l);return`<div class="row"><div><b>${n} <span class="pill">Level ${l}/10</span></b><span>${d}</span><div class="bar"><i style="width:${l*10}%"></i></div></div><button class="btn" ${l>=10||S.money<c?'disabled':''} onclick="up('${k}')">${l>=10?'Maxed':$m(c)}</button></div>`}).join('')}</div>`}
+let wnote='',CH=null;
+const shuf=a=>a.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+const opts=(c,pool)=>{const s=new Set([c]);for(const p of shuf(pool)){if(s.size>=4)break;s.add(p)}return shuf([...s])};
+const wz=()=>18+S.train.off*2;
+function makeQs(){const P=S.players,hi=Math.max(...P.map(p=>p.ovr)),lo=Math.min(...P.map(p=>p.ovr)),pl=P[R(0,4)],nm=n=>[n+1,n+2,n+3,Math.max(0,n-1)].filter(x=>x!==n).map(String),all=[
+['What position does '+pl.n+' play?',pl.pos,POS],
+['What is '+pl.n+'’s rating?',String(pl.ovr),nm(pl.ovr)],
+['How many wins do you have this season?',String(S.w),nm(S.w)],
+['What level is your arena?',String(S.arena),nm(S.arena)],
+['Which season is this?',String(S.season),nm(S.season)],
+['Who do you play next?',S.opp.n,Array.from({length:3},()=>CITY[R(0,9)]+' '+MASC[R(0,9)])]];
+ if(P.filter(p=>p.ovr===hi).length===1)all.push(['Who is your highest-rated player?',P.find(p=>p.ovr===hi).n,P.map(p=>p.n)]);
+ if(P.filter(p=>p.ovr===lo).length===1)all.push(['Who is your lowest-rated player?',P.find(p=>p.ovr===lo).n,P.map(p=>p.n)]);
+ return shuf(all).slice(0,3).map(([q,a,pool])=>({q,a,o:opts(a,pool)}))}
+function startQuiz(){CH={t:'quiz',qs:makeQs(),i:0,ok:0};render()}
+function startShoot(){CH={t:'shoot',n:0,ok:0,z:R(8,92-wz())};render()}
+function ans(v){const q=CH.qs[CH.i];if(v===q.a)CH.ok++;CH.i++;if(CH.i>=3)finish(CH.ok>=2,40*CH.ok,CH.ok+' of 3 correct');else render()}
+function shoot(){const t=$('#trk').getBoundingClientRect(),b=$('#ball').getBoundingClientRect(),x=(b.left+b.width/2-t.left)/t.width*100;
+ if(x>=CH.z&&x<=CH.z+wz())CH.ok++;CH.n++;
+ if(CH.n>=5)return finish(CH.ok>=3,30*CH.ok,CH.ok+' of 5 free throws made');CH.z=R(8,92-wz());render()}
+function finish(pass,pay,label){CH=null;if(pass){S.money+=pay;S.ready=true;wnote=`${label}: +${$m(pay)}. Next game unlocked.`}else wnote=`${label}: not enough to unlock. You earn no cash for a failed warm-up, so try again.`;save();render()}
+function warmup(){
+ if(!CH)return`<div class="card"><h2>Pre-game warm-up</h2><p class="tag">Pass one to unlock the next game. Cash is paid only when you pass.</p><div class="row"><div><b>Team quiz</b><span>3 questions about your team, get 2 right. $40 per correct answer.</span></div><button class="btn" onclick="startQuiz()">Start</button></div><div class="row"><div><b>Free throws</b><span>5 shots, make 3. $30 per make. Shooting drills widen the green zone.</span></div><button class="btn" onclick="startShoot()">Start</button></div></div>`;
+ if(CH.t==='quiz'){const q=CH.qs[CH.i];return`<div class="card"><h2>Question ${CH.i+1} of 3</h2><p>${q.q}</p>${q.o.map(o=>`<div class="row"><b>${o}</b><button class="btn" data-v="${o}" onclick="ans(this.dataset.v)">Pick</button></div>`).join('')}<p class="tag">Tip: check the Roster and Upgrades tabs if you need to.</p></div>`}
+ return`<div class="card"><h2>Free throw ${CH.n+1} of 5</h2><p class="tag">Made ${CH.ok}. Hit Shoot while the ball is over the green zone.</p><div id="trk" style="position:relative;height:34px;background:var(--line);border-radius:17px;overflow:hidden;margin:12px 0"><div style="position:absolute;top:0;bottom:0;left:${CH.z}%;width:${wz()}%;background:var(--good);opacity:.55"></div><div id="ball" style="position:absolute;top:5px;width:24px;height:24px;border-radius:50%;background:var(--acc);animation:sw 1.1s linear infinite alternate"></div></div><button class="btn big" onclick="shoot()">Shoot</button></div>`}
+function render(){const a=$('#app');
+ if(!S){const old=load();a.innerHTML=`<div class="start"><h1>Hoop Stars</h1><p>Take over a struggling team. Win games, earn cash, sign stars, and build the best arena in the league.</p>
+ <input id="tn" maxlength="22" placeholder="Name your team" aria-label="Team name">
+ <button class="btn big" onclick="const v=$('#tn').value.trim();if(v)newGame(v);else $('#tn').focus()">Start season</button>
+ ${old?`<p><button class="btn" style="margin-top:8px" onclick="S=load();render()">Continue ${old.name.replace(/</g,'&lt;')}</button></p>`:''}</div>`;return}
+ a.innerHTML=head()+({play:playTab,roster:rosterTab,market:marketTab,up:upTab})[tab]()}
+render();
+</script></body></html>
