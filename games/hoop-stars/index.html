@@ -52,13 +52,13 @@ const mk=(lo,hi,pos)=>{const o=R(lo,hi);return{n:pname(),pos:pos||POS[R(0,4)],ov
 const tcost=l=>Math.round(250*(l+1)**1.6),acost=l=>Math.round(600*(l+1)**1.7);
 function save(){try{localStorage.setItem('hoopstars',JSON.stringify(S))}catch(e){}}
 function load(){try{const v=localStorage.getItem('hoopstars');return v?JSON.parse(v):null}catch(e){return null}}
-function newGame(name,d){S={name,diff:d,ex:{shop:0,food:0,vip:0},bench:[],sp:null,po:null,draft:null,lg:[],money:d==='hard'?200:300,season:1,game:0,w:0,l:0,tw:0,tl:0,titles:0,train:{off:0,def:0,cond:0},arena:0,
- players:POS.map(p=>mk(36,44,p)),market:[],opp:null};refresh();save();render()}
+function newGame(name,d){S={name,diff:d,ex:{shop:0,food:0,vip:0},bench:[],sp:null,po:null,draft:null,lg:[],money:d==='hard'?250:d==='kaysen'?1000:500,season:1,game:0,w:0,l:0,tw:0,tl:0,titles:0,train:{off:0,def:0,cond:0},arena:0,
+ players:POS.map(p=>mk(d==='kaysen'?42:38,d==='kaysen'?50:46,p)),market:[],opp:null};refresh();save();render()}
 function refresh(){const base=40+S.season*6+S.game;S.market=POS.flatMap(pos=>Array.from({length:10},()=>mk(Math.min(86,base-8),Math.min(94,base+18),pos))).sort((a,b)=>a.pos===b.pos?b.ovr-a.ovr:POS.indexOf(a.pos)-POS.indexOf(b.pos));
  S.opp={n:CITY[R(0,9)]+' '+MASC[R(0,9)],r:46+(S.season-1)*8+S.game*.6+R(-5,5)}}
 const W={PG:1.2,SG:1,SF:1,PF:1,C:1.2};const eff=p=>{if(!p.inj)return p.ovr;const b=S.bench.filter(x=>x.pos===p.pos).sort((a,b)=>b.ovr-a.ovr)[0];return b?b.ovr:25};const rating=()=>S.players.reduce((a,p)=>a+W[p.pos]*eff(p),0)/5.4+(S.train.off+S.train.def+S.train.cond)*.9;
 const gauss=()=>(Math.random()+Math.random()+Math.random()-1.5)*2;
-const income=win=>Math.round((100+S.arena*50+S.ex.shop*30+S.ex.food*25+S.ex.vip*60+(win?150:0))*(1+(S.season-1)*.25)*(S.diff==='hard'?.85:1));
+const income=win=>Math.round((100+S.arena*50+S.ex.shop*30+S.ex.food*25+S.ex.vip*60+(win?150:0))*(1+(S.season-1)*.25)*(S.diff==='hard'?.85:S.diff==='kaysen'?1.25:1));
 function play(){if(!S.ready)return;S.ready=false;wnote='';CH=null;
  const mine=78+(rating()-50)*.55+gauss()*7,theirs=78+(S.opp.r-50)*.55+gauss()*7;
  let a=Math.round(mine),b=Math.round(theirs),q=[];
@@ -81,7 +81,7 @@ function buy(i){const p=S.market[i],worst=S.players.reduce((m,x,j)=>x.ovr<S.play
 function up(k){const cost=k==='arena'?acost(S.arena):tcost(S.train[k]),lv=k==='arena'?S.arena:S.train[k];
  if(S.money<cost||lv>=10)return;S.money-=cost;k==='arena'?S.arena++:S.train[k]++;save();render()}
 const $m=n=>'$'+n.toLocaleString();
-function head(){return`<div class="top"><div><h2>${S.name.replace(/</g,'&lt;')}</h2><small>Season ${S.season} · ${S.diff==='hard'?'Hard':'Normal'} · ${S.po?'Playoffs':'Game '+Math.min(S.game+1,GAMES)+' of '+GAMES}</small></div>
+function head(){return`<div class="top"><div><h2>${S.name.replace(/</g,'&lt;')}</h2><small>Season ${S.season} · ${S.diff==='hard'?'Hard':S.diff==='kaysen'?'Kaysen Mode':'Normal'} · ${S.po?'Playoffs':'Game '+Math.min(S.game+1,GAMES)+' of '+GAMES}</small></div>
 <div class="stat"><div class="num">${$m(S.money)}</div><small>Record ${S.w}-${S.l} · Team rating ${Math.round(rating())}</small><br><button class="btn" style="padding:4px 10px;font-size:13px;margin-top:6px" onclick="resetGame()">${RS?'Tap again to erase save':'New game'}</button></div></div>
 <nav>${[['play','Play'],['roster','Roster'],['market','Sign'],['up','Upgrade'],['lg','League']].map(([k,l])=>`<button class="${tab===k?'on':''}" onclick="tab='${k}';render()">${l}</button>`).join('')}</nav>`}
 function playTab(){
@@ -130,8 +130,8 @@ const EX=[['shop','Merch shop','+$30 per game per level',400],['food','Food stan
 const WU={quiz:['Team quiz','3 questions about your team. Get 2 right.'],math:['Stat math','3 quick scoreboard sums. Get 2 right.'],shoot:['Free throws','Make 3 of 5. Shooting drills widen the zone.'],mem:['Play memory','Memorize the 5 plays, then repeat them in order.'],react:['Rebound reflex','Tap when the ball turns green. Beat 0.55 seconds twice out of 3.']};
 const EM=['🏀','🔥','⭐','👟'];
 function go(d){const v=$('#tn').value.trim();if(v)newGame(v,d);else $('#tn').focus()}
-function norm(){S.ex=S.ex||{shop:0,food:0,vip:0};S.ex.vip=S.ex.vip||0;S.bench=S.bench||[];S.lg=S.lg||[];S.diff=S.diff||'normal';S.sp=S.sp||null;S.po=S.po||null;if(!S.lg.length&&!S.po)refresh()}
-function initLg(){const ns=shuf(CITY.map(c=>c+' '+MASC[R(0,9)])).slice(0,7);S.lg=ns.map(n=>({n,r:50+(S.season-1)*6+R(-8,8)+(S.diff==='hard'?6:0),w:0,l:0}))}
+function norm(){S.ex=S.ex||{shop:0,food:0,vip:0};S.ex.vip=S.ex.vip||0;S.bench=S.bench||[];S.lg=S.lg||[];S.diff=S.diff||'normal';S.sp=S.sp||null;S.po=S.po||null;if(!S.v2){S.v2=1;S.lg.forEach(t=>t.r-=S.diff==='hard'?3:9);if(!S.po)refresh()}if(!S.lg.length&&!S.po)refresh()}
+function initLg(){const ns=shuf(CITY.map(c=>c+' '+MASC[R(0,9)])).slice(0,7);S.lg=ns.map(n=>({n,r:41+(S.season-1)*4+R(-8,8)+(S.diff==='hard'?11:S.diff==='kaysen'?-8:0),w:0,l:0}))}
 function refresh(){const base=40+S.season*6+S.game;S.market=POS.flatMap(pos=>Array.from({length:10},()=>mk(Math.min(86,base-8),Math.min(94,base+18),pos))).sort((a,b)=>a.pos===b.pos?b.ovr-a.ovr:POS.indexOf(a.pos)-POS.indexOf(b.pos));if(!S.lg.length)initLg();if(!S.po){const t=S.lg[R(0,S.lg.length-1)];S.opp={n:t.n,r:t.r+R(-3,3)}}}
 function offers(){const x=Math.round(77+(rating()-50)*.5)+12;return[{t:'win',txt:'Win 3 of your next 5 games',left:5,need:3,got:0,pay:1200*S.season},{t:'pts',txt:'Score '+x+'+ points in one of the next 5 games',left:5,x,got:0,pay:800*S.season}]}
 function take(i){if(S.sp)return;S.sp=offers()[i];save();render()}
@@ -142,7 +142,7 @@ function play(){if(!S.ready)return;S.ready=false;wnote='';CH=null;
  while(a===b){a+=R(0,4);b+=R(0,4);ot=true}
  const win=a>b,pay=Math.round(income(win)*(S.po?1.5:1));
  last={opp:S.opp.n,a,b,qa:splitQ(a),qb:splitQ(b),win,pay,ot,anim:true};S.money+=pay;
- S.players.forEach(p=>{if(p.inj>0)p.inj--;else if(Math.random()<(hd?.11:.07)*(1-S.train.cond*.05)){p.inj=R(2,5);(last.inj=last.inj||[]).push(p.n)}});
+ S.players.forEach(p=>{if(p.inj>0)p.inj--;else if(Math.random()<(hd?.11:S.diff==='kaysen'?.03:.07)*(1-S.train.cond*.05)){p.inj=R(2,5);(last.inj=last.inj||[]).push(p.n)}});
  spon(win,a);simLg();if(!S.po&&Math.random()<.3){const q=EVENTS.map((e,i)=>i).filter(i=>!EVENTS[i].ok||EVENTS[i].ok());S.ev=q[R(0,q.length-1)]};
  if(S.po)playoff(win);else{win?(S.w++,S.tw++):(S.l++,S.tl++);S.game++;S.game>=GAMES?endReg():refresh()}
  save();render();animScore()}
@@ -170,7 +170,7 @@ function startReact(){CH={t:'react',n:0,ok:0,go:false};nextR()}
 function nextR(){const c=CH;c.go=false;render();c.tm=setTimeout(()=>{if(CH===c){c.go=true;c.st=performance.now();render()}},R(900,2600))}
 function reactTap(){const c=CH;clearTimeout(c.tm);if(c.go&&performance.now()-c.st<550)c.ok++;c.n++;if(c.n>=3)return finish(c.ok>=2,45*c.ok,c.ok+' of 3 fast rebounds');nextR()}
 function reactHTML(){return`<div class='card'><h2>Rebound reflex ${CH.n+1} of 3</h2><button class='btn big' style='background:${CH.go?'var(--good)':'var(--bad)'};padding:34px' onclick='reactTap()'>${CH.go?'GRAB IT':'Wait for green...'}</button></div>`}
-function finish(pass,pay,label){if(CH&&CH.tm)clearTimeout(CH.tm);CH=null;pay=Math.round(pay*(S.diff==='hard'?.75:1));if(pass){S.money+=pay;S.ready=true;S.wu=null;wnote=`${label}: +${$m(pay)}. Next game unlocked.`}else wnote=`${label}: not enough to unlock. A failed warm-up pays nothing, so try again.`;save();render()}
+function finish(pass,pay,label){if(CH&&CH.tm)clearTimeout(CH.tm);CH=null;pay=Math.round(pay*(S.diff==='hard'?.75:S.diff==='kaysen'?1.25:1));if(pass){S.money+=pay;S.ready=true;S.wu=null;wnote=`${label}: +${$m(pay)}. Next game unlocked.`}else wnote=`${label}: not enough to unlock. A failed warm-up pays nothing, so try again.`;save();render()}
 function rosterTab(){const E=s=>s.replace(/</g,'&lt;');return`<div class='card'><h2>Starters</h2>${S.players.map(p=>`<div class='row'><div><b>${p.pos} ${E(p.n)}${p.inj?` <span class='pill lose'>Injured ${p.inj}</span>`:''}</b><div class='bar'><i style='width:${p.ovr}%'></i></div></div><div class='ovr'>${p.ovr}</div></div>`).join('')}<p class='tag'>PG and C count 20% more. An injured starter is covered by a same-position bench player, or a weak fill-in.</p></div><div class='card'><h2>Bench (${S.bench.length}/10)</h2>${S.bench.map((p,i)=>`<div class='row'><div><b>${p.pos} ${E(p.n)}</b><span>Potential ${p.pot}</span></div><div class='ovr'>${p.ovr}</div><div style='display:flex;gap:6px'><button class='btn' style='padding:8px 10px' onclick='startSub(${i})'>Start</button><button class='btn' style='padding:8px 10px;background:var(--line);color:var(--ink)' onclick='sellSub(${i})'>Sell ${$m(Math.round(price(p.ovr)*.4))}</button></div></div>`).join('')||`<p class='tag'>No bench players yet. Draft rookies at season end.</p>`}</div>`+(S.draft?`<div class='card'><h2>Season draft</h2><p class='tag'>Pick one rookie. They grow every offseason up to their potential.</p>${S.draft.map((p,i)=>`<div class='row'><div><b>${p.pos} ${E(p.n)}</b><span>Rating ${p.ovr}, potential ${p.pot}</span></div><button class='btn' onclick='pick(${i})'>Draft</button></div>`).join('')}</div>`:'')}
 function marketTab(){return`${msg?`<div class='card win'>${msg}</div>`:''}<p class='tag'>A signing replaces your starter at the same position and he moves to your bench, where you can start or sell him. PG and C count 20% more toward team rating. New faces appear after every game.</p><div>${['ALL',...POS].map(f=>`<button class='btn' style='padding:6px 12px;margin:0 4px 8px 0;${MF===f?'':'background:var(--line);color:var(--ink)'}' onclick="MF='${f}';render()">${f}</button>`).join('')}</div><div class='card'>${S.market.map((p,i)=>{if(MF!=='ALL'&&p.pos!==MF)return'';const o=S.players.find(x=>x.pos===p.pos),c=price(p.ovr),u=p.ovr>o.ovr,ok=S.money>=c&&u;return`<div class='row'><div><b>${p.n}<span class='pill'>${p.pos}</span></b><span>Rating ${p.ovr} vs your ${p.pos} ${o.ovr} · ${$m(c)}</span></div><button class='btn' ${ok?'':'disabled'} onclick='buy(${i})'>${!u?'Not an upgrade':S.money<c?'Need '+$m(c-S.money):'Sign'}</button></div>`}).join('')||'<p>Sold out. Play a game to see new players.</p>'}</div>`}
 function upTab(){const row=(k,n,d,l,c,f,mx)=>`<div class='row'><div><b>${n} <span class='pill'>Level ${l}/${mx}</span></b><span>${d}</span></div><button class='btn' data-k='${k}' ${l>=mx||S.money<c?'disabled':''} onclick='${f}(this.dataset.k)'>${l>=mx?'Maxed':$m(c)}</button></div>`;
@@ -214,7 +214,7 @@ function animScore(){clearInterval(AT);const L=last;if(!L||!L.anim)return;let be
 function render(){const a=$('#app');
  if(!S){const old=load();a.innerHTML=`<div class="start"><h1>Hoop Stars</h1><p>Take over a struggling team. Win games, earn cash, sign stars, and build the best arena in the league.</p>
  <input id="tn" maxlength="22" placeholder="Name your team" aria-label="Team name">
- <button class="btn big" onclick="go('normal')">Start on Normal</button><button class="btn big" style="margin-top:8px;background:var(--ink);color:var(--bg)" onclick="go('hard')">Start on Hard</button>
+ <button class="btn big" onclick="go('normal')">Start on Normal</button><button class="btn big" style="margin-top:8px;background:var(--ink);color:var(--bg)" onclick="go('hard')">Start on Hard</button><button class="btn big" style="margin-top:8px;background:var(--good);color:var(--bg)" onclick="go('kaysen')">Start on Kaysen Mode (easy)</button>
  ${old?`<p><button class="btn" style="margin-top:8px" onclick="S=load();norm();render()">Continue ${old.name.replace(/</g,'&lt;')}</button></p>`:''}</div>`;return}
  a.innerHTML=head()+(tab==='play'?evCard():'')+({play:playTab,roster:rosterTab,market:marketTab,up:upTab,lg:lgTab})[tab]()}
 render();
