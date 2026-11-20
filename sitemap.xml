@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://workers.dev</loc></url>
-  <url><loc>https://workers.devabout.html</loc></url>
-  <url><loc>https://workers.devcontact.html</loc></url>
-  <url><loc>https://workers.devprivacy.html</loc></url>
-  <url><loc>https://workers.devplay/fish-it.html</loc></url>
-  <url><loc>https://workers.devplay/harbor-hut.html</loc></url>
-  <url><loc>https://workers.devplay/hoop-stars.html</loc></url>
-  <url><loc>https://workers.devplay/juke-run.html</loc></url>
-  <url><loc>https://workers.devplay/kingdom-simulator.html</loc></url>
-  <url><loc>https://workers.devplay/long-shot.html</loc></url>
-  <url><loc>https://workers.devplay/mini-business-tycoon.html</loc></url>
-  <url><loc>https://workers.devplay/neon-overrun.html</loc></url>
-  <url><loc>https://workers.devplay/signed.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/about.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/contact.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/privacy.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/play/fish-it.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/play/harbor-hut.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/play/hoop-stars.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/play/juke-run.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/play/kingdom-simulator.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/play/long-shot.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/play/mini-business-tycoon.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/play/neon-overrun.html</loc></url>
+  <url><loc>https://b.loomlab.workers.dev/play/signed.html</loc></url>
 </urlset>
